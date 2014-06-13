@@ -1,0 +1,10 @@
+<Meditate>(not for medical use)
+Total time: 35 min
+Meditate(head-up): 35 min
+Head-up start: 20130405_073316
+Mind active 0 min 0 %
+Alpha wave 29 min 83 %
+Drowsy 1 min 3 %
+Dozing 0 min 0 %
+Delta wave 2 min 5 %
+Motion 2 min 7 %

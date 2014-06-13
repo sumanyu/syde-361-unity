@@ -1,0 +1,11 @@
+<Sleep> (not for medical use)
+Total time: 53 min
+Lie Down: 51 min
+Lie Down Start:  20130412_225246
+Sleep time: 44 min 85 %
+Wake: 4 min 8 %
+REM: 0 min 0 %
+S1: 0 min 0 %
+S2: 42 min 81 %
+S3: 2 min 3 %
+Motion: 3 min 5 %
