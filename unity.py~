@@ -11,16 +11,13 @@ def get_data(file_name):
   }
 
   with open(file_name) as f:
-    # Ignore header
-    header = f.readline()
-
     for input_data in f:
-      x, y = [float(tmp.strip()) for tmp in input_data.split(",")[:2]]
-      # print x, y
+      x, y = [int(tmp.strip()) for tmp in input_data.split(",")[:2]]
+      print x, y
       data['x'].append(x)
       data['y'].append(y)
 
-  # print data
+  print data
 
   return data
 
@@ -47,6 +44,7 @@ def process_data(data):
 def main():
   if '--data' in sys.argv:
     file_name = sys.argv[2]
+    print file_name
     data = get_data(file_name)
     process_data(data)
 
