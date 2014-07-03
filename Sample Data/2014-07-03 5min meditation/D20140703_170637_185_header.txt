@@ -1,0 +1,2 @@
+Version,Patient,Recording,Startdate,Startime,Bytes,Reserved,NumRec,Duration,NumSig
+0       ,X X X X                                                                         ,Startdate 03-JUL-2014 X X UTC-04:00_OPITS185                                    ,03.07.14,17.06.37,2048    ,EDF+C                                       ,102,8       ,6
