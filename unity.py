@@ -20,8 +20,6 @@ def get_data(file_name):
       data['x'].append(x)
       data['y'].append(y)
 
-  # print data
-
   return data
 
 def process_data(data):
@@ -29,18 +27,39 @@ def process_data(data):
   N = len(data['x'])
 
   # sample spacing - Play around with this
-  # T = 1.0 / 800.0
+  T = 1.0 / 800.0
   # x = np.linspace(0.0, N*T, N)
-  # y = 
+  
+  x = np.array(data['x'])
+  y = np.array(data['y'])
 
   # Frequency domain
-  # yf = fft(y)
-  # xf = np.linspace(0.0, 1.0/(2.0*T), N/2)
+  yf = fft(y)
 
-  # Plotting
-  # plt.plot(xf, 2.0/N * np.abs(yf[0:N/2]))
+  # Use simplifying assumption that x are evenly spaced
+  xf = np.linspace(0.0, 1.0/(2.0*T), N/2)
 
+  # First figure
+  plt.figure(1)
+
+  # Time domain
+  plt.subplot(211)
   plt.plot(data['x'], data['y'])
+  plt.xlabel('Time (s)')
+  plt.ylabel('EEG (mV)')
+  plt.title('EEG vs. Time')
+
+  # Frequency domain
+  plt.subplot(212)
+  plt.plot(xf, 2.0/N * np.abs(yf[0:N/2]))
+  plt.xlabel('Frequency (Hz)')
+  plt.ylabel('Magnitude (dB)')
+  plt.title('Magnitude vs. Frequency')
+
+  # xmin xmax ymin ymax
+  plt.axis([1, 40, 0, 6])
+
+  # plt.plot(data['x'], data['y'])
   plt.grid()
   plt.show()
 
