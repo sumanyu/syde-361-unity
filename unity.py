@@ -85,7 +85,7 @@ def interactive_plot(q):
 
 def windowed_fft(q, slide=False, debug=False):
   # Given there are about 550 samples in one second let's use that size for window
-  # T = 1.0/550.0
+  T = 1.0/512
   N = 512
 
   theta_start = 3
@@ -108,8 +108,21 @@ def windowed_fft(q, slide=False, debug=False):
   X = []
   Y = []
   Z = []
+  O = []
 
   window = []
+
+  # Gaussian noise
+  mu = 0
+  sigma = 0.05
+  size = 1
+  
+  # Normal volume
+  baseline = -0.5
+
+  # Time
+  t = 0.0
+  time_scale = 500.0
 
   while q:
     datum = q.popleft()
@@ -168,10 +181,26 @@ def windowed_fft(q, slide=False, debug=False):
       gamma.append(gamma_avg)
 
       # Compute output
-      output = 0
+      noise = np.random.normal(mu, sigma, size)[0]
+      expo = np.exp([-t/time_scale])[0]
+
+      output = 0.0
+      output += noise
+      output += baseline
+      output += expo
+      output += (x + y + z)/3.0
+
+      # Bound output from 0.0 to 1.0
+      if output < 0.0:
+        output = 0.0
+      elif output > 1.0:
+        output = 1.0
+
+      O.append(output)
 
       # Debug
       if debug:
+        print 'T: ', t
         print 'Theta: ', theta_avg
         print 'Alpha: ', alpha_avg
         print 'Beta: ', beta_avg
@@ -179,15 +208,19 @@ def windowed_fft(q, slide=False, debug=False):
         print 'X: ', x
         print 'Y: ', y
         print 'Z: ', z
+        print 'Noise: ', noise
+        print "Exponential: ", expo
         print 'Output: ', output
 
       if slide:
         # Slide the window
         window = window[1:N]
         window.append(datum)
+        t += T
       else:
         # Empty the window completely for copy-paste style processing
         window = []
+        t += T*N
 
   if debug:
     print "****** Statistics ******"
@@ -212,6 +245,29 @@ def windowed_fft(q, slide=False, debug=False):
 
     print 'min Z: ', min(Z)
     print 'max Z: ', max(Z)
+
+    print 'min O: ', min(O)
+    print 'max O: ', max(O)
+
+    # Plot T vs. Output
+
+    # First figure
+    plt.figure(1)
+
+    time_array = np.linspace(0.0, float(t), t)
+    # print len(time_array)
+    output_array = np.array(O)
+    # print len(output_array)
+
+    # Theta
+    plt.subplot(211)
+    plt.plot(time_array, output_array)
+    plt.xlabel('Time (s)')
+    plt.ylabel('Output (vol)')
+    plt.title('Output vs. Time')
+
+    plt.grid()
+    plt.show()
 
   # L = len(data['eeg'])-N
 
