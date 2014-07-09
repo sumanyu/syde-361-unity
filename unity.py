@@ -6,11 +6,16 @@ from scipy.fftpack import fft
 import matplotlib.pyplot as plt
 import numpy as np
 import time
+from collections import deque
+
+q = deque([])
 
 def get_data(file_name):
   data = {
+    'eeg': [],
     'x': [],
-    'y': []
+    'y': [],
+    'z': []
   }
 
   with open(file_name) as f:
@@ -18,14 +23,25 @@ def get_data(file_name):
     header = f.readline()
 
     for input_data in f:
-      x, y = [float(tmp.strip()) for tmp in input_data.split(",")[:2]]
-      # print x, y
+      # ignore time step
+      eeg, x, y, z = [float(tmp.strip()) if tmp.strip() else 0.0 for tmp in input_data.split(",")[1:5]]
+
+      d = {
+        'eeg': eeg,
+        'x': x,
+        'y': y,
+        'z': z
+      }
+      q.append(d)
+
+      data['eeg'].append(eeg)
       data['x'].append(x)
       data['y'].append(y)
+      data['z'].append(z)
 
   return data
 
-def interactive_plot(data):
+def interactive_plot(q):
   # Interactive on
   plt.ion()
 
@@ -46,7 +62,18 @@ def interactive_plot(data):
 
   line, = ax.plot(xs, ys)
 
-  for x, y in zip(data['x'], data['y'])[0::100]:
+  # for x, y in zip(data['x'], data['y'])[0::100]:
+  rate = 512
+  i = 0
+  while not q.empty():
+    if i%rate:
+      i = 0
+      continue
+    i += 1
+
+    d = q.get()
+    x = d['x']
+    y = d['y']
     xs = np.append(xs, x)
     ys = np.append(ys, y)
     line.set_data(xs, ys)
@@ -56,10 +83,10 @@ def interactive_plot(data):
 
   plt.ioff()
 
-def windowed_fft(data):
+def windowed_fft(q, slide=False, debug=False):
   # Given there are about 550 samples in one second let's use that size for window
-  T = 1.0/550.0
-  N = 550
+  # T = 1.0/550.0
+  N = 512
 
   theta_start = 3
   theta_end = 7
@@ -73,80 +100,187 @@ def windowed_fft(data):
   gamma_start = 32
   gamma_end = 64
 
-  t = []
+  # t = []
   theta = []
   alpha = []
   beta = []
   gamma = []
+  X = []
+  Y = []
+  Z = []
 
-  L = len(data['x'])-N
+  window = []
 
-  # For each window take FFT, determine the magnitude for ranges
-  for i in range(L):
-    x = data['x'][i:N+i]
-    y = np.array(data['y'][i:N+i])
+  while q:
+    datum = q.popleft()
 
-    # Frequency domain
-    yf = fft(y)
-    yf = 2.0/N * np.abs(yf[0:N/2])
+    # # Grab the leftmost data points
+    # for i in range(step_size):
+    #   datum.append(q.popleft())
 
-    # Get the theta, alpha, beta, gamma average magnitudes
+    if len(window) < N:
+      # Not enough items in the window to do anything interesting
+      #   for i in range(step_size):
+      # datum.append(q.popleft())
+      window.append(datum)
+    else:
+      # window already contains N items, let's process it
 
-    # Theta 4 – 7
-    theta_avg = sum(yf[theta_start:theta_end])/len(yf[theta_start:theta_end])
-    theta.append(theta_avg)
+      # EEG, x, y, z
+      eeg = np.array([item['eeg'] for item in window])
+
+      x = [abs(item['x']) for item in window if abs(item['x']) > 0.0]
+      x = np.mean(x)
+      X.append(x)
+
+      y = [abs(item['y']) for item in window if abs(item['x']) > 0.0]
+      y = np.mean(y)      
+      Y.append(y)
+
+      z = [abs(item['z']) for item in window if abs(item['x']) > 0.0]
+      z = np.mean(z)
+      Z.append(z)
+
+      # Frequency domain for EEG
+      eegf = fft(eeg)
+      eegf = 2.0/N * np.abs(eegf[0:N/2])
+
+      # Get the theta, alpha, beta, gamma average magnitudes
+
+      # Theta 4 – 7
+      # theta_avg = sum(eegf[theta_start:theta_end])/len(eegf[theta_start:theta_end])
+      theta_avg = np.mean(eegf[theta_start:theta_end])
+      theta.append(theta_avg)
+      
+      # Alpha 8 – 15
+      # alpha_avg = sum(eegf[alpha_start:alpha_end])/len(eegf[alpha_start:alpha_end])
+      alpha_avg = np.mean(eegf[alpha_start:alpha_end])      
+      alpha.append(alpha_avg)
+
+      # Beta 16 – 31
+      # beta_avg = sum(eegf[beta_start:beta_end])/len(eegf[beta_start:beta_end])
+      beta_avg = np.mean(eegf[beta_start:beta_end])            
+      beta.append(beta_avg)
+
+      # Gamma 32 - 64
+      # gamma_avg = sum(eegf[gamma_start:gamma_end])/len(eegf[gamma_start:gamma_end])
+      gamma_avg = np.mean(eegf[gamma_start:gamma_end])
+      gamma.append(gamma_avg)
+
+      # Compute output
+      output = 0
+
+      # Debug
+      if debug:
+        print 'Theta: ', theta_avg
+        print 'Alpha: ', alpha_avg
+        print 'Beta: ', beta_avg
+        print 'Gamma: ', gamma_avg
+        print 'X: ', x
+        print 'Y: ', y
+        print 'Z: ', z
+        print 'Output: ', output
+
+      if slide:
+        # Slide the window
+        window = window[1:N]
+        window.append(datum)
+      else:
+        # Empty the window completely for copy-paste style processing
+        window = []
+
+  if debug:
+    print "****** Statistics ******"
+
+    print 'min Theta: ', min(theta)
+    print 'max Theta: ', max(theta)
+
+    print 'min Alpha: ', min(alpha)
+    print 'max Alpha: ', max(alpha)
+
+    print 'min Beta: ', min(beta)
+    print 'max Beta: ', max(beta)
+
+    print 'min Gamma: ', min(gamma)
+    print 'max Gamma: ', max(gamma)
+
+    print 'min X: ', min(X)
+    print 'max X: ', max(X)
+
+    print 'min Y: ', min(Y)
+    print 'max Y: ', max(Y)
+
+    print 'min Z: ', min(Z)
+    print 'max Z: ', max(Z)
+
+  # L = len(data['eeg'])-N
+
+  # # For each window take FFT, determine the magnitude for ranges
+  # for i in range(L):
+  #   x = data['x'][i:N+i]
+  #   y = np.array(data['y'][i:N+i])
+
+  #   # Frequency domain
+  #   yf = fft(y)
+  #   yf = 2.0/N * np.abs(yf[0:N/2])
+
+  #   # Get the theta, alpha, beta, gamma average magnitudes
+
+  #   # Theta 4 – 7
+  #   theta_avg = sum(yf[theta_start:theta_end])/len(yf[theta_start:theta_end])
+  #   theta.append(theta_avg)
     
-    # Alpha 8 – 15
-    alpha_avg = sum(yf[alpha_start:alpha_end])/len(yf[alpha_start:alpha_end])
-    alpha.append(alpha_avg)
+  #   # Alpha 8 – 15
+  #   alpha_avg = sum(yf[alpha_start:alpha_end])/len(yf[alpha_start:alpha_end])
+  #   alpha.append(alpha_avg)
 
-    # Beta 16 – 31
-    beta_avg = sum(yf[beta_start:beta_end])/len(yf[beta_start:beta_end])
-    beta.append(beta_avg)
+  #   # Beta 16 – 31
+  #   beta_avg = sum(yf[beta_start:beta_end])/len(yf[beta_start:beta_end])
+  #   beta.append(beta_avg)
 
-    # Gamma 32 - 64
-    gamma_avg = sum(yf[gamma_start:gamma_end])/len(yf[gamma_start:gamma_end])
-    gamma.append(gamma_avg)
+  #   # Gamma 32 - 64
+  #   gamma_avg = sum(yf[gamma_start:gamma_end])/len(yf[gamma_start:gamma_end])
+  #   gamma.append(gamma_avg)
 
-    t.append(x[-1])
+  #   t.append(x[-1])
 
-  # Convert to np.array
-  for ar in [t, theta, alpha, beta, gamma]:
-    ar = np.array(ar)
+  # # Convert to np.array
+  # for ar in [t, theta, alpha, beta, gamma]:
+  #   ar = np.array(ar)
 
-  # First figure
-  plt.figure(1)
+  # # First figure
+  # plt.figure(1)
 
-  # Theta
-  plt.subplot(221)
-  plt.plot(t, theta)
-  plt.xlabel('Time (s)')
-  plt.ylabel('Magnitude (dB)')
-  plt.title('Theta vs. Time')
+  # # Theta
+  # plt.subplot(221)
+  # plt.plot(t, theta)
+  # plt.xlabel('Time (s)')
+  # plt.ylabel('Magnitude (dB)')
+  # plt.title('Theta vs. Time')
 
-  # Alpha
-  plt.subplot(222)
-  plt.plot(t, alpha)
-  plt.xlabel('Time (s)')
-  plt.ylabel('Magnitude (dB)')
-  plt.title('Alpha vs. Time')
+  # # Alpha
+  # plt.subplot(222)
+  # plt.plot(t, alpha)
+  # plt.xlabel('Time (s)')
+  # plt.ylabel('Magnitude (dB)')
+  # plt.title('Alpha vs. Time')
 
-  # Beta
-  plt.subplot(223)
-  plt.plot(t, beta)
-  plt.xlabel('Time (s)')
-  plt.ylabel('Magnitude (dB)')
-  plt.title('Beta vs. Time')
+  # # Beta
+  # plt.subplot(223)
+  # plt.plot(t, beta)
+  # plt.xlabel('Time (s)')
+  # plt.ylabel('Magnitude (dB)')
+  # plt.title('Beta vs. Time')
 
-  # Gamma
-  plt.subplot(224)
-  plt.plot(t, gamma)
-  plt.xlabel('Time (s)')
-  plt.ylabel('Magnitude (dB)')
-  plt.title('Gamma vs. Time')
+  # # Gamma
+  # plt.subplot(224)
+  # plt.plot(t, gamma)
+  # plt.xlabel('Time (s)')
+  # plt.ylabel('Magnitude (dB)')
+  # plt.title('Gamma vs. Time')
 
-  plt.grid()
-  plt.show(block=True)
+  # plt.grid()
+  # plt.show(block=True)
 
 def process_data(data):
   # Number of samplepoints
@@ -191,8 +325,9 @@ def process_data(data):
   plt.show()
 
 def restrict_data(data, factor):
-  data['x'] = data['x'][0:len(data['x'])/factor]
-  data['y'] = data['y'][0:len(data['y'])/factor]
+  for key in data:
+    to = len(data[key])/factor
+    data[key] = data[key][0: to]
 
   return data
 
@@ -200,8 +335,11 @@ def main():
   if '--data' in sys.argv:
     file_name = sys.argv[2]
     data = get_data(file_name)
-    data = restrict_data(data, 4)
-    windowed_fft(data)
+
+    # interactive_plot(q)
+
+    # data = restrict_data(data, 10)
+    windowed_fft(q, slide=False, debug=True)
     # process_data(data)
     # interactive_plot(data)
 
