@@ -10,7 +10,6 @@ import time
 from collections import deque
 import os
 import threading
-import sleep
 
 #matplotlib.rcParams['backend'] = "GTKAgg"
 q = deque([])
@@ -228,7 +227,7 @@ def windowed_fft(q, slide=False, debug=False):
           window = []
           t += T*N
       else:
-        sleep(1)
+        time.sleep(1)
 
   # Temp disabling
   # if debug:
