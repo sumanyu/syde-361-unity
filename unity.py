@@ -412,11 +412,12 @@ def readPipe(pipe):
     eegs = [float(tmp.strip()) if tmp.strip() else 0.0 for tmp in response.split(",")]
 
     # Tmp until we get actual values for xyz
-    x = 0.0
-    y = 0.0
-    z = 0.0
+    tmp = 0.00001
+    x = tmp
+    y = tmp
+    z = tmp
 
-    for eeg in eggs:
+    for eeg in eegs:
       d = {
         'eeg': eeg,
         'x': x,
