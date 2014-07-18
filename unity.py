@@ -10,6 +10,7 @@ import time
 from collections import deque
 import os
 import threading
+import sleep
 
 #matplotlib.rcParams['backend'] = "GTKAgg"
 q = deque([])
@@ -128,150 +129,158 @@ def windowed_fft(q, slide=False, debug=False):
   t = 0.0
   time_scale = 500.0
 
-  while q:
-    datum = q.popleft()
+  while True:
+    if q:
+      datum = q.popleft()
 
-    # # Grab the leftmost data points
-    # for i in range(step_size):
-    #   datum.append(q.popleft())
+      # # Grab the leftmost data points
+      # for i in range(step_size):
+      #   datum.append(q.popleft())
 
-    if len(window) < N:
-      # Not enough items in the window to do anything interesting
-      #   for i in range(step_size):
-      # datum.append(q.popleft())
-      window.append(datum)
-    else:
-      # window already contains N items, let's process it
-
-      # EEG, x, y, z
-      eeg = np.array([item['eeg'] for item in window])
-
-      x = [abs(item['x']) for item in window if abs(item['x']) > 0.0]
-      x = np.mean(x)
-      X.append(x)
-
-      y = [abs(item['y']) for item in window if abs(item['x']) > 0.0]
-      y = np.mean(y)      
-      Y.append(y)
-
-      z = [abs(item['z']) for item in window if abs(item['x']) > 0.0]
-      z = np.mean(z)
-      Z.append(z)
-
-      # Frequency domain for EEG
-      eegf = fft(eeg)
-      eegf = 2.0/N * np.abs(eegf[0:N/2])
-
-      # Get the theta, alpha, beta, gamma average magnitudes
-
-      # Theta 4 – 7
-      # theta_avg = sum(eegf[theta_start:theta_end])/len(eegf[theta_start:theta_end])
-      theta_avg = np.mean(eegf[theta_start:theta_end])
-      theta.append(theta_avg)
-      
-      # Alpha 8 – 15
-      # alpha_avg = sum(eegf[alpha_start:alpha_end])/len(eegf[alpha_start:alpha_end])
-      alpha_avg = np.mean(eegf[alpha_start:alpha_end])      
-      alpha.append(alpha_avg)
-
-      # Beta 16 – 31
-      # beta_avg = sum(eegf[beta_start:beta_end])/len(eegf[beta_start:beta_end])
-      beta_avg = np.mean(eegf[beta_start:beta_end])            
-      beta.append(beta_avg)
-
-      # Gamma 32 - 64
-      # gamma_avg = sum(eegf[gamma_start:gamma_end])/len(eegf[gamma_start:gamma_end])
-      gamma_avg = np.mean(eegf[gamma_start:gamma_end])
-      gamma.append(gamma_avg)
-
-      # Compute output
-      noise = np.random.normal(mu, sigma, size)[0]
-      expo = np.exp([-t/time_scale])[0]
-
-      output = 0.0
-      output += noise
-      output += baseline
-      output += expo
-      output += (x + y + z)/3.0
-
-      # Bound output from 0.0 to 1.0
-      if output < 0.0:
-        output = 0.0
-      elif output > 1.0:
-        output = 1.0
-
-      O.append(output)
-
-      # Debug
-      if debug:
-        print 'T: ', t
-        print 'Theta: ', theta_avg
-        print 'Alpha: ', alpha_avg
-        print 'Beta: ', beta_avg
-        print 'Gamma: ', gamma_avg
-        print 'X: ', x
-        print 'Y: ', y
-        print 'Z: ', z
-        print 'Noise: ', noise
-        print "Exponential: ", expo
-        print 'Output: ', output
-
-      if slide:
-        # Slide the window
-        window = window[1:N]
+      if len(window) < N:
+        # Not enough items in the window to do anything interesting
+        #   for i in range(step_size):
+        # datum.append(q.popleft())
         window.append(datum)
-        t += T
       else:
-        # Empty the window completely for copy-paste style processing
-        window = []
-        t += T*N
+        # window already contains N items, let's process it
 
-  if debug:
-    print "****** Statistics ******"
+        # EEG, x, y, z
+        eeg = np.array([item['eeg'] for item in window])
 
-    print 'min Theta: ', min(theta)
-    print 'max Theta: ', max(theta)
+        x = [abs(item['x']) for item in window if abs(item['x']) > 0.0]
+        x = np.mean(x)
+        X.append(x)
 
-    print 'min Alpha: ', min(alpha)
-    print 'max Alpha: ', max(alpha)
+        y = [abs(item['y']) for item in window if abs(item['x']) > 0.0]
+        y = np.mean(y)      
+        Y.append(y)
 
-    print 'min Beta: ', min(beta)
-    print 'max Beta: ', max(beta)
+        z = [abs(item['z']) for item in window if abs(item['x']) > 0.0]
+        z = np.mean(z)
+        Z.append(z)
 
-    print 'min Gamma: ', min(gamma)
-    print 'max Gamma: ', max(gamma)
+        # Frequency domain for EEG
+        eegf = fft(eeg)
+        eegf = 2.0/N * np.abs(eegf[0:N/2])
 
-    print 'min X: ', min(X)
-    print 'max X: ', max(X)
+        # Get the theta, alpha, beta, gamma average magnitudes
 
-    print 'min Y: ', min(Y)
-    print 'max Y: ', max(Y)
+        # Theta 4 – 7
+        # theta_avg = sum(eegf[theta_start:theta_end])/len(eegf[theta_start:theta_end])
+        theta_avg = np.mean(eegf[theta_start:theta_end])
+        theta.append(theta_avg)
+        
+        # Alpha 8 – 15
+        # alpha_avg = sum(eegf[alpha_start:alpha_end])/len(eegf[alpha_start:alpha_end])
+        alpha_avg = np.mean(eegf[alpha_start:alpha_end])      
+        alpha.append(alpha_avg)
 
-    print 'min Z: ', min(Z)
-    print 'max Z: ', max(Z)
+        # Beta 16 – 31
+        # beta_avg = sum(eegf[beta_start:beta_end])/len(eegf[beta_start:beta_end])
+        beta_avg = np.mean(eegf[beta_start:beta_end])            
+        beta.append(beta_avg)
 
-    print 'min O: ', min(O)
-    print 'max O: ', max(O)
+        # Gamma 32 - 64
+        # gamma_avg = sum(eegf[gamma_start:gamma_end])/len(eegf[gamma_start:gamma_end])
+        gamma_avg = np.mean(eegf[gamma_start:gamma_end])
+        gamma.append(gamma_avg)
 
-    # Plot T vs. Output
+        # Compute output
+        noise = np.random.normal(mu, sigma, size)[0]
+        expo = np.exp([-t/time_scale])[0]
 
-    # First figure
-    plt.figure(1)
+        output = 0.0
+        output += noise
+        output += baseline
+        output += expo
+        output += (x + y + z)/3.0
 
-    time_array = np.linspace(0.0, float(t), t)
-    # print len(time_array)
-    output_array = np.array(O)
-    # print len(output_array)
+        # Bound output from 0.0 to 1.0
+        if output < 0.0:
+          output = 0.0
+        elif output > 1.0:
+          output = 1.0
 
-    # Theta
-    plt.subplot(211)
-    plt.plot(time_array, output_array)
-    plt.xlabel('Time (s)')
-    plt.ylabel('Output (vol)')
-    plt.title('Output vs. Time')
+        O.append(output)
 
-    plt.grid()
-    plt.show()
+        # Debug
+        if debug:
+          print 'T: ', t
+          print 'Theta: ', theta_avg
+          print 'Alpha: ', alpha_avg
+          print 'Beta: ', beta_avg
+          print 'Gamma: ', gamma_avg
+          print 'X: ', x
+          print 'Y: ', y
+          print 'Z: ', z
+          print 'Noise: ', noise
+          print "Exponential: ", expo
+          print 'Output: ', output
+
+        if slide:
+          # Slide the window
+          window = window[1:N]
+          window.append(datum)
+          t += T
+        else:
+          # Empty the window completely for copy-paste style processing
+          window = []
+          t += T*N
+      else:
+        sleep(1)
+
+  # Temp disabling
+  # if debug:
+  #   print "****** Statistics ******"
+
+  #   print 'min Theta: ', min(theta)
+  #   print 'max Theta: ', max(theta)
+
+  #   print 'min Alpha: ', min(alpha)
+  #   print 'max Alpha: ', max(alpha)
+
+  #   print 'min Beta: ', min(beta)
+  #   print 'max Beta: ', max(beta)
+
+  #   print 'min Gamma: ', min(gamma)
+  #   print 'max Gamma: ', max(gamma)
+
+  #   print 'min X: ', min(X)
+  #   print 'max X: ', max(X)
+
+  #   print 'min Y: ', min(Y)
+  #   print 'max Y: ', max(Y)
+
+  #   print 'min Z: ', min(Z)
+  #   print 'max Z: ', max(Z)
+
+  #   print 'min O: ', min(O)
+  #   print 'max O: ', max(O)
+
+  #   # Plot T vs. Output
+
+  #   # First figure
+  #   plt.figure(1)
+
+  #   time_array = np.linspace(0.0, float(t), t)
+  #   # print len(time_array)
+  #   output_array = np.array(O)
+  #   # print len(output_array)
+
+  #   # Theta
+  #   plt.subplot(211)
+  #   plt.plot(time_array, output_array)
+  #   plt.xlabel('Time (s)')
+  #   plt.ylabel('Output (vol)')
+  #   plt.title('Output vs. Time')
+
+  #   plt.grid()
+  #   plt.show()
+
+
+
+
 
   # L = len(data['eeg'])-N
 
