@@ -407,10 +407,25 @@ def readPipe(pipe):
     response = os.read(fd, 2000)
     print response + "\n"
 
-    vals = response.split(",")
-    for val in vals:
-        if val:
-            q.append(val)
+    eeg = [float(tmp.strip()) if tmp.strip() else 0.0 for tmp in response.split(",")]
+
+    # Tmp until we get actual values for xyz
+    x = 0.0
+    y = 0.0
+    z = 0.0
+
+    d = {
+      'eeg': eeg,
+      'x': x,
+      'y': y,
+      'z': z
+    }
+
+    q.append(d)
+
+    # for val in vals:
+    #     if val:
+    #         q.append(val)
 
     os.close(fd)
 
