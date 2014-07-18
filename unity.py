@@ -407,12 +407,12 @@ def readPipe(pipe):
     response = os.read(fd, 2000)
     print response + "\n"
 
-    eeg = [float(tmp.strip()) if tmp.strip() else 0.0 for tmp in response.split(",")]
-
     # Tmp until we get actual values for xyz
-    x = 0.0
-    y = 0.0
-    z = 0.0
+    eeg, x, y, z = [float(tmp.strip()) if tmp.strip() else 0.0 for tmp in response.split(",") + [""]*3]
+
+    # x = 0.0
+    # y = 0.0
+    # z = 0.0
 
     d = {
       'eeg': eeg,
