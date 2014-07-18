@@ -226,8 +226,8 @@ def windowed_fft(q, slide=False, debug=False):
           # Empty the window completely for copy-paste style processing
           window = []
           t += T*N
-      else:
-        time.sleep(1)
+    else:
+      time.sleep(1)
 
   # Temp disabling
   # if debug:
