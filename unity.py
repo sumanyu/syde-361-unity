@@ -227,6 +227,7 @@ def windowed_fft(q, slide=False, debug=False):
           window = []
           t += T*N
     else:
+      print "queue is empty :("
       time.sleep(1)
 
   # Temp disabling
