@@ -401,37 +401,39 @@ def restrict_data(data, factor):
   return data
 
 def readPipe(pipe):
-    if not os.path.exists(pipe):
-        os.mkfifo(pipe, 0666)
 
-    fd = os.open(pipe, os.O_RDONLY)
-    response = os.read(fd, 2000)
-    print response + "\n"
+    while True:
+        if not os.path.exists(pipe):
+            os.mkfifo(pipe, 0666)
 
-    # 64 values for eeg
-    eegs = [float(tmp.strip()) if tmp.strip() else 0.0 for tmp in response.split(",")]
+        fd = os.open(pipe, os.O_RDONLY)
+        response = os.read(fd, 2000)
+        print response + "\n"
 
-    # Tmp until we get actual values for xyz
-    tmp = 0.00001
-    x = tmp
-    y = tmp
-    z = tmp
+        # 64 values for eeg
+        eegs = [float(tmp.strip()) if tmp.strip() else 0.0 for tmp in response.split(",")]
 
-    for eeg in eegs:
-      d = {
-        'eeg': eeg,
-        'x': x,
-        'y': y,
-        'z': z
-      }
+        # Tmp until we get actual values for xyz
+        tmp = 0.00001
+        x = tmp
+        y = tmp
+        z = tmp
 
-      q.append(d)
+        for eeg in eegs:
+          d = {
+            'eeg': eeg,
+            'x': x,
+            'y': y,
+            'z': z
+          }
 
-    # for val in vals:
-    #     if val:
-    #         q.append(val)
+          q.append(d)
 
-    os.close(fd)
+        # for val in vals:
+        #     if val:
+        #         q.append(val)
+
+        os.close(fd)
 
 def main():
   if '--data' in sys.argv:
