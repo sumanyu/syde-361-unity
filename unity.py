@@ -3,11 +3,15 @@
 import sys
 
 from scipy.fftpack import fft
+import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import time
 from collections import deque
+import os
+import threading
 
+#matplotlib.rcParams['backend'] = "GTKAgg"
 q = deque([])
 
 def get_data(file_name):
@@ -387,17 +391,48 @@ def restrict_data(data, factor):
 
   return data
 
+def readPipe(pipe):
+    if not os.path.exists(pipe):
+        os.mkfifo(pipe, 0666)
+
+    fd = os.open(pipe, os.O_RDONLY)
+    response = os.read(fd, 2000)
+    print response + "\n"
+
+    vals = response.split(",")
+    for val in vals:
+        if val:
+            q.append(val)
+
+    os.close(fd)
+
 def main():
   if '--data' in sys.argv:
     file_name = sys.argv[2]
     data = get_data(file_name)
 
     # interactive_plot(q)
-
     # data = restrict_data(data, 10)
     windowed_fft(q, slide=False, debug=True)
     # process_data(data)
     # interactive_plot(data)
+
+  else:
+    pipe = '/tmp/opi_pipe'
+    threads = []
+    for i in range(1, 11):
+        thread = threading.Thread(target=readPipe, args=((pipe + str(i)),))
+        threads.append(thread)
+        thread.start()
+
+    windowed_fft(q, slide=False, debug=True)
+
+    for t in threads:
+        t.join()
+
+    for num in range(1, 11):
+        os.remove(pipe + str(num))
+    print "main exits"
 
 if __name__ == "__main__":
   main()
