@@ -408,30 +408,21 @@ def readPipe(pipe):
 
         fd = os.open(pipe, os.O_RDONLY)
         response = os.read(fd, 2000)
-        print response + "\n"
+        #print response + "\n"
 
-        # 64 values for eeg
-        eegs = [float(tmp.strip()) if tmp.strip() else 0.0 for tmp in response.split(",")]
+        vals = response.split(",")
+        for val in vals:
+            if val.strip():
+                eeg, x, y, z = [float(tmp.strip()) if tmp.strip() else 0.0 for tmp in val.split("/")]
 
-        # Tmp until we get actual values for xyz
-        tmp = 0.00001
-        x = tmp
-        y = tmp
-        z = tmp
+                d = {
+                    'eeg': eeg,
+                    'x': x,
+                    'y': y,
+                    'z': z
+                }
 
-        for eeg in eegs:
-          d = {
-            'eeg': eeg,
-            'x': x,
-            'y': y,
-            'z': z
-          }
-
-          q.append(d)
-
-        # for val in vals:
-        #     if val:
-        #         q.append(val)
+                q.append(d)
 
         os.close(fd)
 
