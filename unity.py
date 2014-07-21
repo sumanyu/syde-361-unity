@@ -190,11 +190,18 @@ def windowed_fft(q, slide=False, debug=False):
         noise = np.random.normal(mu, sigma, size)[0]
         expo = np.exp([-t/time_scale])[0]
 
+        # Offsets
+        x_offset = 3
+        y_offset = 6
+        z_offset = 60
+
         output = 0.0
         output += noise
         output += baseline
         output += expo
-        output += (x + y + z)/3.0
+        output += abs(x - x_offset)/100.0
+        output += abs(y - y_offset)/100.0
+        output += abs(z - z_offset)/100.0
 
         # Bound output from 0.0 to 1.0
         if output < 0.0:
