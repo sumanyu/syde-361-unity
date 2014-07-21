@@ -10,6 +10,7 @@ import time
 from collections import deque
 import os
 import threading
+import pygame
 
 #matplotlib.rcParams['backend'] = "GTKAgg"
 q = deque([])
@@ -400,6 +401,21 @@ def restrict_data(data, factor):
 
   return data
 
+def playMusic():
+    while True:
+        if q:
+            pygame.init()
+            pygame.mixer.music.load("enya.mp3")
+            pygame.mixer.music.play(0)
+
+            while pygame.mixer.music.get_busy():
+                for i in range(0, 11):
+                    adjustVol(0.1 * i)
+                    time.sleep(5)
+
+def adjustVol(vol):
+    pygame.mixer.sound.setVolume(vol)
+
 def readPipe(pipe):
 
     while True:
@@ -446,6 +462,7 @@ def main():
         thread.start()
 
     windowed_fft(q, slide=False, debug=True)
+    playMusic()
 
     for t in threads:
         t.join()
