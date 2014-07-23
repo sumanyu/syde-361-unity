@@ -127,7 +127,8 @@ def get_noise_model(q, debug=True):
   }
 
   if debug:
-    print "noise modelling: " + averages
+    print "noise modelling: "
+    print averages
 
   return averages
 
@@ -203,7 +204,7 @@ def windowed_fft(q, slide=False, debug=False, noise_model=None):
       else:
         # Warm up. Get some initial readings on the person to evaluate their starting state.
         if t < WARM_UP_TIME:
-          print "Entering warm up time"
+          print "Entering warm up time" + str(t)
 
           # EEG, x, y, z
           eeg = np.array([item['eeg'] for item in window])
