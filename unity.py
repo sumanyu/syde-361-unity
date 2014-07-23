@@ -113,7 +113,7 @@ def get_noise_model(q, debug=True):
           avg = np.mean([item[label] for item in window])
           array.append(avg)
     else:
-      print "noise modelling queue is empty :("
+      print "noise modelling: queue is empty :("
       time.sleep(1)
 
   # Return average of the averaged values
@@ -447,9 +447,12 @@ def readPipe(pipe):
         os.close(fd)
 
 def stopNoise(timeout):
-    if q:
-        time.sleep(timeout)
-        modelling_noise = False
+    global modelling_noise
+    while True:
+        if q:
+            time.sleep(timeout)
+            modelling_noise = False
+            break
 
 def main():
   if '--data' in sys.argv:
