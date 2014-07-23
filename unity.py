@@ -15,6 +15,8 @@ import pygame
 #matplotlib.rcParams['backend'] = "GTKAgg"
 q = deque([])
 
+modelling_noise = True
+
 def get_data(file_name):
   data = {
     'eeg': [],
@@ -88,6 +90,45 @@ def interactive_plot(q):
 
   plt.ioff()
 
+def get_noise_model(q, debug=True):
+  # Constructs a noise model that will be used to offset the actual signal from the sensor
+
+  N = 512
+
+  eeg_avg = []
+  x_avg = []
+  y_avg = []
+  z_avg = []
+
+  window = []
+
+  while modelling_noise:
+    if q:
+      datum = q.popleft()
+
+      if len(window) < N:
+        window.append(datum)
+      else:
+        for array, label in zip([eeg_avg, x_avg, y_avg, z_avg], ['eeg', 'x', 'y', 'z']):
+          avg = np.mean([item[label] for item in window])
+          array.append(avg)
+    else:
+      print "queue is empty :("
+      time.sleep(1)
+
+  # Return average of the averaged values
+  averages = {
+    'eeg': np.mean(eeg_avg),
+    'x': np.mean(x_avg),
+    'y': np.mean(y_avg),
+    'z': np.mean(z_avg)
+  }
+
+  if debug:
+    print averages
+
+  return averages
+
 def windowed_fft(q, slide=False, debug=False):
   # Given there are about 550 samples in one second let's use that size for window
   T = 1.0/512
@@ -129,6 +170,21 @@ def windowed_fft(q, slide=False, debug=False):
   t = 0.0
   time_scale = 500.0
 
+  WARM_UP = 5.0
+
+  # Default offsets
+  x_offset = 3
+  y_offset = 6
+  z_offset = 60
+
+  theta_warm = []
+  alpha_warm = []
+  beta_warm = []
+  gamma_warm = []
+  X_warm = []
+  Y_warm = []
+  Z_warm = []
+
   while True:
     if q:
       datum = q.popleft()
@@ -143,93 +199,141 @@ def windowed_fft(q, slide=False, debug=False):
         # datum.append(q.popleft())
         window.append(datum)
       else:
-        # window already contains N items, let's process it
+        # Warm up. Get some initial readings on the person to evaluate their starting state.
+        if t < WARM_UP:
+          # EEG, x, y, z
+          eeg = np.array([item['eeg'] for item in window])
 
-        # EEG, x, y, z
-        eeg = np.array([item['eeg'] for item in window])
+          x = [abs(item['x']) for item in window if abs(item['x']) > 0.0]
+          x = np.mean(x)
+          X_warm.append(x)
 
-        x = [abs(item['x']) for item in window if abs(item['x']) > 0.0]
-        x = np.mean(x)
-        X.append(x)
+          y = [abs(item['y']) for item in window if abs(item['x']) > 0.0]
+          y = np.mean(y)      
+          Y_warm.append(y)
 
-        y = [abs(item['y']) for item in window if abs(item['x']) > 0.0]
-        y = np.mean(y)      
-        Y.append(y)
+          z = [abs(item['z']) for item in window if abs(item['x']) > 0.0]
+          z = np.mean(z)
+          Z_warm.append(z)
 
-        z = [abs(item['z']) for item in window if abs(item['x']) > 0.0]
-        z = np.mean(z)
-        Z.append(z)
+          # Frequency domain for EEG
+          eegf = fft(eeg)
+          eegf = 2.0/N * np.abs(eegf[0:N/2])
 
-        # Frequency domain for EEG
-        eegf = fft(eeg)
-        eegf = 2.0/N * np.abs(eegf[0:N/2])
+          # Get the theta, alpha, beta, gamma average magnitudes
 
-        # Get the theta, alpha, beta, gamma average magnitudes
+          # Theta 4 – 7
+          # theta_avg = sum(eegf[theta_start:theta_end])/len(eegf[theta_start:theta_end])
+          theta_avg = np.mean(eegf[theta_start:theta_end])
+          theta_warm.append(theta_avg)
 
-        # Theta 4 – 7
-        # theta_avg = sum(eegf[theta_start:theta_end])/len(eegf[theta_start:theta_end])
-        theta_avg = np.mean(eegf[theta_start:theta_end])
-        theta.append(theta_avg)
-        
-        # Alpha 8 – 15
-        # alpha_avg = sum(eegf[alpha_start:alpha_end])/len(eegf[alpha_start:alpha_end])
-        alpha_avg = np.mean(eegf[alpha_start:alpha_end])      
-        alpha.append(alpha_avg)
+          # Alpha 8 – 15
+          # alpha_avg = sum(eegf[alpha_start:alpha_end])/len(eegf[alpha_start:alpha_end])
+          alpha_avg = np.mean(eegf[alpha_start:alpha_end])      
+          alpha_warm.append(alpha_avg)
 
-        # Beta 16 – 31
-        # beta_avg = sum(eegf[beta_start:beta_end])/len(eegf[beta_start:beta_end])
-        beta_avg = np.mean(eegf[beta_start:beta_end])            
-        beta.append(beta_avg)
+          # Beta 16 – 31
+          # beta_avg = sum(eegf[beta_start:beta_end])/len(eegf[beta_start:beta_end])
+          beta_avg = np.mean(eegf[beta_start:beta_end])            
+          beta_warm.append(beta_avg)
 
-        # Gamma 32 - 64
-        # gamma_avg = sum(eegf[gamma_start:gamma_end])/len(eegf[gamma_start:gamma_end])
-        gamma_avg = np.mean(eegf[gamma_start:gamma_end])
-        gamma.append(gamma_avg)
+          # Gamma 32 - 64
+          # gamma_avg = sum(eegf[gamma_start:gamma_end])/len(eegf[gamma_start:gamma_end])
+          gamma_avg = np.mean(eegf[gamma_start:gamma_end])
+          gamma_warm.append(gamma_avg)
 
-        # Compute output
-        noise = np.random.normal(mu, sigma, size)[0]
-        expo = np.exp([-t/time_scale])[0]
+          # Compute offsets
+          x_offset = np.mean(X_warm)
+          y_offset = np.mean(Y_warm)
+          z_offset = np.mean(Z_warm)
+        else:
+          # EEG, x, y, z
+          eeg = np.array([item['eeg'] for item in window])
 
-        output = 0.0
-        output += noise
-        output += baseline
-        output += expo
-        output += (x + y + z)/150.00
+          x = [abs(item['x']) for item in window if abs(item['x']) > 0.0]
+          x = np.mean(x)
+          X.append(x)
 
-        # Bound output from 0.0 to 1.0
-        if output < 0.0:
+          y = [abs(item['y']) for item in window if abs(item['x']) > 0.0]
+          y = np.mean(y)      
+          Y.append(y)
+
+          z = [abs(item['z']) for item in window if abs(item['x']) > 0.0]
+          z = np.mean(z)
+          Z.append(z)
+
+          # Frequency domain for EEG
+          eegf = fft(eeg)
+          eegf = 2.0/N * np.abs(eegf[0:N/2])
+
+          # Get the theta, alpha, beta, gamma average magnitudes
+
+          # Theta 4 – 7
+          # theta_avg = sum(eegf[theta_start:theta_end])/len(eegf[theta_start:theta_end])
+          theta_avg = np.mean(eegf[theta_start:theta_end])
+          theta.append(theta_avg)
+          
+          # Alpha 8 – 15
+          # alpha_avg = sum(eegf[alpha_start:alpha_end])/len(eegf[alpha_start:alpha_end])
+          alpha_avg = np.mean(eegf[alpha_start:alpha_end])      
+          alpha.append(alpha_avg)
+
+          # Beta 16 – 31
+          # beta_avg = sum(eegf[beta_start:beta_end])/len(eegf[beta_start:beta_end])
+          beta_avg = np.mean(eegf[beta_start:beta_end])            
+          beta.append(beta_avg)
+
+          # Gamma 32 - 64
+          # gamma_avg = sum(eegf[gamma_start:gamma_end])/len(eegf[gamma_start:gamma_end])
+          gamma_avg = np.mean(eegf[gamma_start:gamma_end])
+          gamma.append(gamma_avg)
+
+          # Compute output
+          noise = np.random.normal(mu, sigma, size)[0]
+          expo = np.exp([-t/time_scale])[0]
+
           output = 0.0
-        elif output > 1.0:
-          output = 1.0
+          output += noise
+          output += baseline
+          output += expo
+          output += abs(x - x_offset)/100.0
+          output += abs(y - y_offset)/100.0
+          output += abs(z - z_offset)/100.0
 
-        if pygame.mixer.music.get_busy():
+          # Bound output from 0.0 to 1.0
+          if output < 0.0:
+            output = 0.0
+          elif output > 1.0:
+            output = 1.0
+
+          if pygame.mixer.music.get_busy():
             adjustVol(output)
 
-        O.append(output)
+          O.append(output)
 
-        # Debug
-        if debug:
-          print 'T: ', t
-          print 'Theta: ', theta_avg
-          print 'Alpha: ', alpha_avg
-          print 'Beta: ', beta_avg
-          print 'Gamma: ', gamma_avg
-          print 'X: ', x
-          print 'Y: ', y
-          print 'Z: ', z
-          print 'Noise: ', noise
-          print "Exponential: ", expo
-          print 'Output: ', output
+          # Debug
+          if debug:
+            print 'T: ', t
+            print 'Theta: ', theta_avg
+            print 'Alpha: ', alpha_avg
+            print 'Beta: ', beta_avg
+            print 'Gamma: ', gamma_avg
+            print 'X: ', x
+            print 'Y: ', y
+            print 'Z: ', z
+            print 'Noise: ', noise
+            print "Exponential: ", expo
+            print 'Output: ', output
 
-        if slide:
-          # Slide the window
-          window = window[1:N]
-          window.append(datum)
-          t += T
-        else:
-          # Empty the window completely for copy-paste style processing
-          window = []
-          t += T*N
+          if slide:
+            # Slide the window
+            window = window[1:N]
+            window.append(datum)
+            t += T
+          else:
+            # Empty the window completely for copy-paste style processing
+            window = []
+            t += T*N
     else:
       #print "queue is empty :("
       time.sleep(1)
@@ -452,7 +556,9 @@ def main():
 
     # interactive_plot(q)
     # data = restrict_data(data, 10)
+
     windowed_fft(q, slide=False, debug=True)
+
     # process_data(data)
     # interactive_plot(data)
 
@@ -468,6 +574,7 @@ def main():
     threads.append(thread_music)
     thread_music.start()
 
+    noise_model = get_noise_model(q)
     windowed_fft(q, slide=False, debug=True)
 
     for t in threads:
