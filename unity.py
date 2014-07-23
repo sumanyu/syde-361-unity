@@ -324,9 +324,9 @@ def windowed_fft(q, slide=False, debug=False, noise_model=None):
           output += noise
           output += baseline
           output += expo
-          output += x
-          output += y
-          output += z
+          output += x/30.0
+          output += y/30.0
+          output += z/30.0
 
           # Bound output from 0.0 to 1.0
           if output < 0.0:
