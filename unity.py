@@ -113,7 +113,7 @@ def get_noise_model(q, debug=True):
           avg = np.mean([item[label] for item in window])
           array.append(avg)
     else:
-      print "queue is empty :("
+      print "noise modelling queue is empty :("
       time.sleep(1)
 
   # Return average of the averaged values
@@ -562,6 +562,11 @@ def readPipe(pipe):
 
         os.close(fd)
 
+def stopNoise(timeout):
+    if q:
+        time.sleep(timeout)
+        modelling_noise = False
+
 def main():
   if '--data' in sys.argv:
     file_name = sys.argv[2]
@@ -586,6 +591,10 @@ def main():
     thread_music = threading.Thread(target=playMusic, args=())
     threads.append(thread_music)
     thread_music.start()
+
+    thread_stopNoise = threading.Thread(target=stopNoise, args=(30,))
+    threads.append(thread_stopNoise)
+    thread_stopNoise.start()
 
     noise_model = get_noise_model(q)
     windowed_fft(q, slide=False, debug=True, noise_model=noise_model)
