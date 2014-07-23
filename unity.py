@@ -129,7 +129,10 @@ def get_noise_model(q, debug=True):
 
   return averages
 
-def windowed_fft(q, slide=False, debug=False):
+def offset_g(original, offset):
+  return abs(original - offset)
+
+def windowed_fft(q, slide=False, debug=False, noise_model=None):
   # Given there are about 550 samples in one second let's use that size for window
   T = 1.0/512
   N = 512
@@ -170,13 +173,15 @@ def windowed_fft(q, slide=False, debug=False):
   t = 0.0
   time_scale = 500.0
 
-  WARM_UP = 5.0
+  WARM_UP_TIME = 5.0
 
   # Default offsets
+  eeg_offset = 0
   x_offset = 3
   y_offset = 6
   z_offset = 60
 
+  eeg_warm = []
   theta_warm = []
   alpha_warm = []
   beta_warm = []
@@ -200,9 +205,10 @@ def windowed_fft(q, slide=False, debug=False):
         window.append(datum)
       else:
         # Warm up. Get some initial readings on the person to evaluate their starting state.
-        if t < WARM_UP:
+        if t < WARM_UP_TIME:
           # EEG, x, y, z
           eeg = np.array([item['eeg'] for item in window])
+          eeg_warm.append(np.mean(eeg))
 
           x = [abs(item['x']) for item in window if abs(item['x']) > 0.0]
           x = np.mean(x)
@@ -243,6 +249,7 @@ def windowed_fft(q, slide=False, debug=False):
           gamma_warm.append(gamma_avg)
 
           # Compute offsets
+          eeg_offset = np.mean(eeg_warm)
           x_offset = np.mean(X_warm)
           y_offset = np.mean(Y_warm)
           z_offset = np.mean(Z_warm)
@@ -250,16 +257,26 @@ def windowed_fft(q, slide=False, debug=False):
           # EEG, x, y, z
           eeg = np.array([item['eeg'] for item in window])
 
+          # Offset noise
+          if noise_model:
+            eeg = [data - noise_model['eeg'] for data in eeg]
+
+          # Offset human bias
+          eeg = [data - eeg_offset for data in eeg]
+
           x = [abs(item['x']) for item in window if abs(item['x']) > 0.0]
           x = np.mean(x)
+          x = offset_g(x, x_offset)
           X.append(x)
 
           y = [abs(item['y']) for item in window if abs(item['x']) > 0.0]
-          y = np.mean(y)      
+          y = np.mean(y)    
+          y = offset_g(y, y_offset)
           Y.append(y)
 
           z = [abs(item['z']) for item in window if abs(item['x']) > 0.0]
           z = np.mean(z)
+          z = offset_g(z, z_offset)
           Z.append(z)
 
           # Frequency domain for EEG
@@ -296,9 +313,9 @@ def windowed_fft(q, slide=False, debug=False):
           output += noise
           output += baseline
           output += expo
-          output += abs(x - x_offset)/100.0
-          output += abs(y - y_offset)/100.0
-          output += abs(z - z_offset)/100.0
+          output += x
+          output += y
+          output += z
 
           # Bound output from 0.0 to 1.0
           if output < 0.0:
@@ -385,10 +402,6 @@ def windowed_fft(q, slide=False, debug=False):
 
   #   plt.grid()
   #   plt.show()
-
-
-
-
 
   # L = len(data['eeg'])-N
 
@@ -575,7 +588,7 @@ def main():
     thread_music.start()
 
     noise_model = get_noise_model(q)
-    windowed_fft(q, slide=False, debug=True)
+    windowed_fft(q, slide=False, debug=True, noise_model=noise_model)
 
     for t in threads:
         t.join()
