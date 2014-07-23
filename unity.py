@@ -93,6 +93,8 @@ def interactive_plot(q):
 def get_noise_model(q, debug=True):
   # Constructs a noise model that will be used to offset the actual signal from the sensor
 
+  print "Entering modelling noise"
+
   N = 512
 
   eeg_avg = []
@@ -133,6 +135,8 @@ def offset_g(original, offset):
   return abs(original - offset)
 
 def windowed_fft(q, slide=False, debug=False, noise_model=None):
+  print "Entering windowed_fft"
+
   # Given there are about 550 samples in one second let's use that size for window
   T = 1.0/512
   N = 512
@@ -199,6 +203,8 @@ def windowed_fft(q, slide=False, debug=False, noise_model=None):
       else:
         # Warm up. Get some initial readings on the person to evaluate their starting state.
         if t < WARM_UP_TIME:
+          print "Entering warm up time"
+
           # EEG, x, y, z
           eeg = np.array([item['eeg'] for item in window])
           eeg_warm.append(np.mean(eeg))
@@ -247,6 +253,7 @@ def windowed_fft(q, slide=False, debug=False, noise_model=None):
           y_offset = np.mean(Y_warm)
           z_offset = np.mean(Z_warm)
         else:
+          print "Entering actual meditation processing"
           # EEG, x, y, z
           eeg = np.array([item['eeg'] for item in window])
 
@@ -443,6 +450,7 @@ def stopNoise(timeout):
     while True:
         if q:
             time.sleep(timeout)
+            print "Stopping modelling noise"
             modelling_noise = False
             break
 
