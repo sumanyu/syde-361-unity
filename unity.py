@@ -194,14 +194,7 @@ def windowed_fft(q, slide=False, debug=False, noise_model=None):
     if q:
       datum = q.popleft()
 
-      # # Grab the leftmost data points
-      # for i in range(step_size):
-      #   datum.append(q.popleft())
-
       if len(window) < N:
-        # Not enough items in the window to do anything interesting
-        #   for i in range(step_size):
-        # datum.append(q.popleft())
         window.append(datum)
       else:
         # Warm up. Get some initial readings on the person to evaluate their starting state.
@@ -215,11 +208,11 @@ def windowed_fft(q, slide=False, debug=False, noise_model=None):
           x = np.mean(x)
           X_warm.append(x)
 
-          y = [abs(item['y']) for item in window if abs(item['x']) > 0.0]
+          y = [abs(item['y']) for item in window if abs(item['y']) > 0.0]
           y = np.mean(y)      
           Y_warm.append(y)
 
-          z = [abs(item['z']) for item in window if abs(item['x']) > 0.0]
+          z = [abs(item['z']) for item in window if abs(item['z']) > 0.0]
           z = np.mean(z)
           Z_warm.append(z)
 
@@ -270,12 +263,12 @@ def windowed_fft(q, slide=False, debug=False, noise_model=None):
           x = offset_g(x, x_offset)
           X.append(x)
 
-          y = [abs(item['y']) for item in window if abs(item['x']) > 0.0]
+          y = [abs(item['y']) for item in window if abs(item['y']) > 0.0]
           y = np.mean(y)    
           y = offset_g(y, y_offset)
           Y.append(y)
 
-          z = [abs(item['z']) for item in window if abs(item['x']) > 0.0]
+          z = [abs(item['z']) for item in window if abs(item['z']) > 0.0]
           z = np.mean(z)
           z = offset_g(z, z_offset)
           Z.append(z)
