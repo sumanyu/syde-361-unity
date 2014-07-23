@@ -336,6 +336,8 @@ def windowed_fft(q, slide=False, debug=False, noise_model=None):
 
           if pygame.mixer.music.get_busy():
             adjustVol(output)
+          else:
+              playMusic()
 
           O.append(output)
 
