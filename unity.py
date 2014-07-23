@@ -252,6 +252,16 @@ def windowed_fft(q, slide=False, debug=False, noise_model=None):
           x_offset = np.mean(X_warm)
           y_offset = np.mean(Y_warm)
           z_offset = np.mean(Z_warm)
+
+          if slide:
+            # Slide the window
+            window = window[1:N]
+            window.append(datum)
+            t += T
+          else:
+            # Empty the window completely for copy-paste style processing
+            window = []
+            t += T*N
         else:
           print "Entering actual meditation processing"
           # EEG, x, y, z
