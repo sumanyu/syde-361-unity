@@ -201,8 +201,7 @@ def windowed_fft(q, slide=False, debug=False, noise_model=None):
         if t < WARM_UP_TIME:
           # EEG, x, y, z
           eeg = np.array([item['eeg'] for item in window])
-          eeg = np.mean(eeg)
-          eeg_warm.append(eeg)
+          eeg_warm.append(np.mean(eeg))
 
           x = [abs(item['x']) for item in window if abs(item['x']) > 0.0]
           x = np.mean(x)
