@@ -208,7 +208,8 @@ def windowed_fft(q, slide=False, debug=False, noise_model=None):
         if t < WARM_UP_TIME:
           # EEG, x, y, z
           eeg = np.array([item['eeg'] for item in window])
-          eeg_warm.append(np.mean(eeg))
+          eeg = np.mean(eeg)
+          eeg_warm.append(eeg)
 
           x = [abs(item['x']) for item in window if abs(item['x']) > 0.0]
           x = np.mean(x)
@@ -354,123 +355,6 @@ def windowed_fft(q, slide=False, debug=False, noise_model=None):
     else:
       #print "queue is empty :("
       time.sleep(1)
-
-  # Temp disabling
-  # if debug:
-  #   print "****** Statistics ******"
-
-  #   print 'min Theta: ', min(theta)
-  #   print 'max Theta: ', max(theta)
-
-  #   print 'min Alpha: ', min(alpha)
-  #   print 'max Alpha: ', max(alpha)
-
-  #   print 'min Beta: ', min(beta)
-  #   print 'max Beta: ', max(beta)
-
-  #   print 'min Gamma: ', min(gamma)
-  #   print 'max Gamma: ', max(gamma)
-
-  #   print 'min X: ', min(X)
-  #   print 'max X: ', max(X)
-
-  #   print 'min Y: ', min(Y)
-  #   print 'max Y: ', max(Y)
-
-  #   print 'min Z: ', min(Z)
-  #   print 'max Z: ', max(Z)
-
-  #   print 'min O: ', min(O)
-  #   print 'max O: ', max(O)
-
-  #   # Plot T vs. Output
-
-  #   # First figure
-  #   plt.figure(1)
-
-  #   time_array = np.linspace(0.0, float(t), t)
-  #   # print len(time_array)
-  #   output_array = np.array(O)
-  #   # print len(output_array)
-
-  #   # Theta
-  #   plt.subplot(211)
-  #   plt.plot(time_array, output_array)
-  #   plt.xlabel('Time (s)')
-  #   plt.ylabel('Output (vol)')
-  #   plt.title('Output vs. Time')
-
-  #   plt.grid()
-  #   plt.show()
-
-  # L = len(data['eeg'])-N
-
-  # # For each window take FFT, determine the magnitude for ranges
-  # for i in range(L):
-  #   x = data['x'][i:N+i]
-  #   y = np.array(data['y'][i:N+i])
-
-  #   # Frequency domain
-  #   yf = fft(y)
-  #   yf = 2.0/N * np.abs(yf[0:N/2])
-
-  #   # Get the theta, alpha, beta, gamma average magnitudes
-
-  #   # Theta 4 – 7
-  #   theta_avg = sum(yf[theta_start:theta_end])/len(yf[theta_start:theta_end])
-  #   theta.append(theta_avg)
-    
-  #   # Alpha 8 – 15
-  #   alpha_avg = sum(yf[alpha_start:alpha_end])/len(yf[alpha_start:alpha_end])
-  #   alpha.append(alpha_avg)
-
-  #   # Beta 16 – 31
-  #   beta_avg = sum(yf[beta_start:beta_end])/len(yf[beta_start:beta_end])
-  #   beta.append(beta_avg)
-
-  #   # Gamma 32 - 64
-  #   gamma_avg = sum(yf[gamma_start:gamma_end])/len(yf[gamma_start:gamma_end])
-  #   gamma.append(gamma_avg)
-
-  #   t.append(x[-1])
-
-  # # Convert to np.array
-  # for ar in [t, theta, alpha, beta, gamma]:
-  #   ar = np.array(ar)
-
-  # # First figure
-  # plt.figure(1)
-
-  # # Theta
-  # plt.subplot(221)
-  # plt.plot(t, theta)
-  # plt.xlabel('Time (s)')
-  # plt.ylabel('Magnitude (dB)')
-  # plt.title('Theta vs. Time')
-
-  # # Alpha
-  # plt.subplot(222)
-  # plt.plot(t, alpha)
-  # plt.xlabel('Time (s)')
-  # plt.ylabel('Magnitude (dB)')
-  # plt.title('Alpha vs. Time')
-
-  # # Beta
-  # plt.subplot(223)
-  # plt.plot(t, beta)
-  # plt.xlabel('Time (s)')
-  # plt.ylabel('Magnitude (dB)')
-  # plt.title('Beta vs. Time')
-
-  # # Gamma
-  # plt.subplot(224)
-  # plt.plot(t, gamma)
-  # plt.xlabel('Time (s)')
-  # plt.ylabel('Magnitude (dB)')
-  # plt.title('Gamma vs. Time')
-
-  # plt.grid()
-  # plt.show(block=True)
 
 def process_data(data):
   # Number of samplepoints
