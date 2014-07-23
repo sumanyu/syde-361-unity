@@ -194,13 +194,16 @@ def windowed_fft(q, slide=False, debug=False):
         output += noise
         output += baseline
         output += expo
-        output += (x + y + z)/3.0
+        output += (x + y + z)/150.00
 
         # Bound output from 0.0 to 1.0
         if output < 0.0:
           output = 0.0
         elif output > 1.0:
           output = 1.0
+
+        if pygame.mixer.music.get_busy():
+            adjustVol(output)
 
         O.append(output)
 
@@ -228,7 +231,7 @@ def windowed_fft(q, slide=False, debug=False):
           window = []
           t += T*N
     else:
-      print "queue is empty :("
+      #print "queue is empty :("
       time.sleep(1)
 
   # Temp disabling
@@ -402,19 +405,19 @@ def restrict_data(data, factor):
   return data
 
 def playMusic():
-    while True:
-        if q:
-            pygame.init()
-            pygame.mixer.music.load("enya.mp3")
-            pygame.mixer.music.play(0)
+    #check for user input of starting session
+    pygame.init()
+    pygame.mixer.music.load("enya.mp3")
+    pygame.mixer.music.play(0)
 
-            while pygame.mixer.music.get_busy():
-                for i in range(0, 11):
-                    adjustVol(0.1 * i)
-                    time.sleep(5)
+    if pygame.mixer.music.get_busy():
+        print "music playing...."
+        time.sleep(5)
+
 
 def adjustVol(vol):
-    pygame.mixer.sound.setVolume(vol)
+    pygame.mixer.music.set_volume(vol)
+    print "adjusted volume to " + str(vol)
 
 def readPipe(pipe):
 
@@ -461,8 +464,11 @@ def main():
         threads.append(thread)
         thread.start()
 
+    thread_music = threading.Thread(target=playMusic, args=())
+    threads.append(thread_music)
+    thread_music.start()
+
     windowed_fft(q, slide=False, debug=True)
-    playMusic()
 
     for t in threads:
         t.join()
