@@ -127,7 +127,7 @@ def get_noise_model(q, debug=True):
   }
 
   if debug:
-    print averages
+    print "noise modelling: " + averages
 
   return averages
 
@@ -427,7 +427,7 @@ def playMusic():
 
 def adjustVol(vol):
     pygame.mixer.music.set_volume(vol)
-    print "adjusted volume to " + str(vol)
+    print "Adjusted volume to " + str(vol)
 
 def readPipe(pipe):
 
