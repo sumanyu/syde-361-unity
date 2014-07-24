@@ -368,6 +368,7 @@ def windowed_fft(q, slide=False, debug=False, noise_model=None):
       #print "queue is empty :("
       time.sleep(1)
 
+"""
 def process_data(data):
   # Number of samplepoints
   N = len(data['x'])
@@ -416,7 +417,7 @@ def restrict_data(data, factor):
     data[key] = data[key][0: to]
 
   return data
-
+"""
 def playMusic():
     #check for user input of starting session
     pygame.init()
