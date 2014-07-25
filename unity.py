@@ -285,7 +285,7 @@ def windowed_fft(q, slide=False, debug=False, noise_model=None):
               # Empty the window completely for copy-paste style processing
               window = []
           else:
-            print "Entering actual meditation processing"
+            print "Meditating..."
             # EEG, x, y, z
             eeg = np.array([item['eeg'] for item in window])
 
