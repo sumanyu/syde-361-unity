@@ -357,6 +357,9 @@ def windowed_fft(q, slide=False, debug=False, noise_model=None):
               'exp': expo
             }
 
+            print "Outputting data to file"
+            print data_packet
+
             json_packet = json.dumps(data_packet)
             json.dump(json_packet, f)
 
