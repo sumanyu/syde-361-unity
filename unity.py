@@ -524,7 +524,7 @@ def main():
     threads.append(thread_music)
     thread_music.start()
 
-    thread_stopNoise = threading.Thread(target=stopNoise, args=(30,))
+    thread_stopNoise = threading.Thread(target=stopNoise, args=(20,))
     threads.append(thread_stopNoise)
     thread_stopNoise.start()
 
