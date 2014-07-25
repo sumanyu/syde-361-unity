@@ -16,6 +16,7 @@ import pygame
 q = deque([])
 
 modelling_noise = True
+warm_up = True
 
 theta_start = 3
 theta_end = 7
@@ -239,8 +240,9 @@ def windowed_fft(q, slide=False, debug=False, noise_model=None):
           window.append(datum)
         else:
           # Warm up. Get some initial readings on the person to evaluate their starting state.
-          if t < WARM_UP_TIME:
-            print "Entering warm up time: %d" % t
+          if warm_up:
+            print "Warming up..."
+            # print "Entering warm up time: %d" % t
 
             # EEG, x, y, z
             eeg = np.array([item['eeg'] for item in window])
@@ -279,11 +281,11 @@ def windowed_fft(q, slide=False, debug=False, noise_model=None):
               # Slide the window
               window = window[1:N]
               window.append(datum)
-              t += T
+              # t += T
             else:
               # Empty the window completely for copy-paste style processing
               window = []
-              t += T*N
+              # t += T*N
           else:
             print "Entering actual meditation processing"
             # EEG, x, y, z
