@@ -3,7 +3,7 @@
 import sys
 
 from scipy.fftpack import fft
-import matplotlib
+#import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import time
@@ -149,6 +149,12 @@ def get_noise_model(q, debug=True):
 
 def offset_g(original, offset):
   return abs(original - offset)
+
+def bound_eeg(eeg):
+    if eeg > 800:
+        eeg = 800
+
+    return eeg
 
 def bound_output(output):
   # Bound output from 0.0 to 1.0
