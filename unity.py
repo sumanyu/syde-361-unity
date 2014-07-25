@@ -327,9 +327,10 @@ def windowed_fft(q, slide=False, debug=False, noise_model=None):
           output += noise
           output += baseline
           output += expo
-          output += x/30.0
-          output += y/30.0
-          output += z/30.0
+          #caliberating acceleration normalization
+          output += x/50.0
+          output += y/50.0
+          output += z/50.0
 
           output = bound_output(output)
 
