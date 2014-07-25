@@ -206,7 +206,7 @@ def windowed_fft(q, slide=False, debug=False, noise_model=None):
   size = 1
   
   # Normal volume
-  baseline = -0.5
+  baseline = -0.3
 
   # Time
   t = 0.0
