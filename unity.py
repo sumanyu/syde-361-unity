@@ -135,6 +135,40 @@ def get_noise_model(q, debug=True):
 def offset_g(original, offset):
   return abs(original - offset)
 
+def bound_output(output):
+  # Bound output from 0.0 to 1.0
+  if output < 0.0:
+    output = 0.0
+  elif output > 1.0:
+    output = 1.0
+
+  return output
+
+def get_mean_pos(label, window):
+  val = [abs(item[label]) for item in window if abs(item[label]) > 0.0]
+  val = np.mean(val)
+
+  return val
+
+def get_mean_eeg_spectrums(eegf):
+  # Theta 4 – 7
+  # theta_avg = sum(eegf[theta_start:theta_end])/len(eegf[theta_start:theta_end])
+  theta_avg = np.mean(eegf[theta_start:theta_end])
+  
+  # Alpha 8 – 15
+  # alpha_avg = sum(eegf[alpha_start:alpha_end])/len(eegf[alpha_start:alpha_end])
+  alpha_avg = np.mean(eegf[alpha_start:alpha_end])      
+
+  # Beta 16 – 31
+  # beta_avg = sum(eegf[beta_start:beta_end])/len(eegf[beta_start:beta_end])
+  beta_avg = np.mean(eegf[beta_start:beta_end])            
+
+  # Gamma 32 - 64
+  # gamma_avg = sum(eegf[gamma_start:gamma_end])/len(eegf[gamma_start:gamma_end])
+  gamma_avg = np.mean(eegf[gamma_start:gamma_end])
+
+  return theta_avg, alpha_avg, beta_avg, gamma_avg
+
 def windowed_fft(q, slide=False, debug=False, noise_model=None):
   print "Entering windowed_fft"
 
@@ -210,16 +244,13 @@ def windowed_fft(q, slide=False, debug=False, noise_model=None):
           eeg = np.array([item['eeg'] for item in window])
           eeg_warm.append(np.mean(eeg))
 
-          x = [abs(item['x']) for item in window if abs(item['x']) > 0.0]
-          x = np.mean(x)
+          x = get_mean_pos('x', window)
           X_warm.append(x)
 
-          y = [abs(item['y']) for item in window if abs(item['y']) > 0.0]
-          y = np.mean(y)      
+          y = get_mean_pos('y', window)
           Y_warm.append(y)
 
-          z = [abs(item['z']) for item in window if abs(item['z']) > 0.0]
-          z = np.mean(z)
+          z = get_mean_pos('z', window)
           Z_warm.append(z)
 
           # Frequency domain for EEG
@@ -227,25 +258,11 @@ def windowed_fft(q, slide=False, debug=False, noise_model=None):
           eegf = 2.0/N * np.abs(eegf[0:N/2])
 
           # Get the theta, alpha, beta, gamma average magnitudes
+          theta_avg, alpha_avg, beta_avg, gamma_avg = get_mean_eeg_spectrums(eegf)
 
-          # Theta 4 – 7
-          # theta_avg = sum(eegf[theta_start:theta_end])/len(eegf[theta_start:theta_end])
-          theta_avg = np.mean(eegf[theta_start:theta_end])
-          theta_warm.append(theta_avg)
-
-          # Alpha 8 – 15
-          # alpha_avg = sum(eegf[alpha_start:alpha_end])/len(eegf[alpha_start:alpha_end])
-          alpha_avg = np.mean(eegf[alpha_start:alpha_end])      
-          alpha_warm.append(alpha_avg)
-
-          # Beta 16 – 31
-          # beta_avg = sum(eegf[beta_start:beta_end])/len(eegf[beta_start:beta_end])
-          beta_avg = np.mean(eegf[beta_start:beta_end])            
+          theta_warm.append(theta_avg)    
+          alpha_warm.append(alpha_avg)      
           beta_warm.append(beta_avg)
-
-          # Gamma 32 - 64
-          # gamma_avg = sum(eegf[gamma_start:gamma_end])/len(eegf[gamma_start:gamma_end])
-          gamma_avg = np.mean(eegf[gamma_start:gamma_end])
           gamma_warm.append(gamma_avg)
 
           # Compute offsets
@@ -275,18 +292,15 @@ def windowed_fft(q, slide=False, debug=False, noise_model=None):
           # Offset human bias
           eeg = [data - eeg_offset for data in eeg]
 
-          x = [abs(item['x']) for item in window if abs(item['x']) > 0.0]
-          x = np.mean(x)
+          x = get_mean_pos('x', window)
           x = offset_g(x, x_offset)
           X.append(x)
 
-          y = [abs(item['y']) for item in window if abs(item['y']) > 0.0]
-          y = np.mean(y)    
+          y = get_mean_pos('y', window)
           y = offset_g(y, y_offset)
           Y.append(y)
 
-          z = [abs(item['z']) for item in window if abs(item['z']) > 0.0]
-          z = np.mean(z)
+          z = get_mean_pos('z', window)
           z = offset_g(z, z_offset)
           Z.append(z)
 
@@ -296,24 +310,11 @@ def windowed_fft(q, slide=False, debug=False, noise_model=None):
 
           # Get the theta, alpha, beta, gamma average magnitudes
 
-          # Theta 4 – 7
-          # theta_avg = sum(eegf[theta_start:theta_end])/len(eegf[theta_start:theta_end])
-          theta_avg = np.mean(eegf[theta_start:theta_end])
+          theta_avg, alpha_avg, beta_avg, gamma_avg = get_mean_eeg_spectrums(eegf)
+
           theta.append(theta_avg)
-          
-          # Alpha 8 – 15
-          # alpha_avg = sum(eegf[alpha_start:alpha_end])/len(eegf[alpha_start:alpha_end])
-          alpha_avg = np.mean(eegf[alpha_start:alpha_end])      
           alpha.append(alpha_avg)
-
-          # Beta 16 – 31
-          # beta_avg = sum(eegf[beta_start:beta_end])/len(eegf[beta_start:beta_end])
-          beta_avg = np.mean(eegf[beta_start:beta_end])            
           beta.append(beta_avg)
-
-          # Gamma 32 - 64
-          # gamma_avg = sum(eegf[gamma_start:gamma_end])/len(eegf[gamma_start:gamma_end])
-          gamma_avg = np.mean(eegf[gamma_start:gamma_end])
           gamma.append(gamma_avg)
 
           # Compute output
@@ -328,16 +329,12 @@ def windowed_fft(q, slide=False, debug=False, noise_model=None):
           output += y/30.0
           output += z/30.0
 
-          # Bound output from 0.0 to 1.0
-          if output < 0.0:
-            output = 0.0
-          elif output > 1.0:
-            output = 1.0
+          output = bound_output(output)
 
           if pygame.mixer.music.get_busy():
             adjustVol(output)
           else:
-              playMusic()
+            playMusic()
 
           O.append(output)
 
