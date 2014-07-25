@@ -363,6 +363,7 @@ def windowed_fft(q, slide=False, debug=False, noise_model=None):
 
             json_packet = json.dumps(data_packet)
             json.dump(json_packet, f)
+            f.write("\n")
 
             # Debug
             if debug:
@@ -457,7 +458,6 @@ def adjustVol(vol):
     print "Adjusted volume to " + str(vol)
 
 def readPipe(pipe):
-
     while True:
         if not os.path.exists(pipe):
             os.mkfifo(pipe, 0666)
