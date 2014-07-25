@@ -17,6 +17,18 @@ q = deque([])
 
 modelling_noise = True
 
+theta_start = 3
+theta_end = 7
+
+alpha_start = 7
+alpha_end = 15
+
+beta_start = 15
+beta_end = 32
+
+gamma_start = 32
+gamma_end = 64
+
 def get_data(file_name):
   data = {
     'eeg': [],
@@ -176,18 +188,6 @@ def windowed_fft(q, slide=False, debug=False, noise_model=None):
   T = 1.0/512
   N = 512
 
-  theta_start = 3
-  theta_end = 7
-
-  alpha_start = 7
-  alpha_end = 15
-
-  beta_start = 15
-  beta_end = 32
-
-  gamma_start = 32
-  gamma_end = 64
-
   # t = []
   theta = []
   alpha = []
@@ -238,7 +238,7 @@ def windowed_fft(q, slide=False, debug=False, noise_model=None):
       else:
         # Warm up. Get some initial readings on the person to evaluate their starting state.
         if t < WARM_UP_TIME:
-          print "Entering warm up time" + str(t)
+          print "Entering warm up time: %d" % t
 
           # EEG, x, y, z
           eeg = np.array([item['eeg'] for item in window])
@@ -253,6 +253,13 @@ def windowed_fft(q, slide=False, debug=False, noise_model=None):
           z = get_mean_pos('z', window)
           Z_warm.append(z)
 
+          # Compute offsets
+          eeg_offset = np.mean(eeg_warm)
+          x_offset = np.mean(X_warm)
+          y_offset = np.mean(Y_warm)
+          z_offset = np.mean(Z_warm)
+
+          #*** For Freq domain averaging; not using right now ***
           # Frequency domain for EEG
           eegf = fft(eeg)
           eegf = 2.0/N * np.abs(eegf[0:N/2])
@@ -264,12 +271,7 @@ def windowed_fft(q, slide=False, debug=False, noise_model=None):
           alpha_warm.append(alpha_avg)      
           beta_warm.append(beta_avg)
           gamma_warm.append(gamma_avg)
-
-          # Compute offsets
-          eeg_offset = np.mean(eeg_warm)
-          x_offset = np.mean(X_warm)
-          y_offset = np.mean(Y_warm)
-          z_offset = np.mean(Z_warm)
+          #*** End optional code ***
 
           if slide:
             # Slide the window
