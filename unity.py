@@ -16,7 +16,7 @@ import pygame
 q = deque([])
 
 modelling_noise = True
-warm_up = True
+calibrating = True
 
 theta_start = 3
 theta_end = 7
@@ -240,8 +240,8 @@ def windowed_fft(q, slide=False, debug=False, noise_model=None):
           window.append(datum)
         else:
           # Warm up. Get some initial readings on the person to evaluate their starting state.
-          if warm_up:
-            print "Warming up..."
+          if calibrating:
+            print "Calibrating..."
             # print "Entering warm up time: %d" % t
 
             # EEG, x, y, z
@@ -281,11 +281,9 @@ def windowed_fft(q, slide=False, debug=False, noise_model=None):
               # Slide the window
               window = window[1:N]
               window.append(datum)
-              # t += T
             else:
               # Empty the window completely for copy-paste style processing
               window = []
-              # t += T*N
           else:
             print "Entering actual meditation processing"
             # EEG, x, y, z
@@ -492,6 +490,15 @@ def stopNoise(timeout):
             modelling_noise = False
             break
 
+def stop_calibration(timeout):
+    global calibrating
+    while True:
+        if q:
+            time.sleep(timeout)
+            print "Stopping calibration. Starting meditation session"
+            calibrating = False
+            break
+
 def main():
   if '--data' in sys.argv:
     file_name = sys.argv[2]
@@ -522,6 +529,12 @@ def main():
     thread_stopNoise.start()
 
     noise_model = get_noise_model(q)
+
+    # Set warm up for 5 seconds. We can hook this up to an actual function later.
+    thread_stop_calibration = threading.Thread(target=stop_calibration, args=(10,))
+    threads.append(thread_stop_calibration)
+    thread_stop_calibration.start()
+
     windowed_fft(q, slide=False, debug=True, noise_model=noise_model)
 
     for t in threads:
