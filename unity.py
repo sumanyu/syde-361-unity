@@ -62,7 +62,7 @@ def get_data(file_name):
       data['z'].append(z)
 
   return data
-
+"""
 def interactive_plot(q):
   # Interactive on
   plt.ion()
@@ -104,7 +104,7 @@ def interactive_plot(q):
     # time.sleep(0.000001)
 
   plt.ioff()
-
+"""
 def get_noise_model(q, debug=True):
   # Constructs a noise model that will be used to offset the actual signal from the sensor
 
