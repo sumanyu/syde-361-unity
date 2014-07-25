@@ -11,6 +11,7 @@ from collections import deque
 import os
 import threading
 import pygame
+import datetime
 
 #matplotlib.rcParams['backend'] = "GTKAgg"
 q = deque([])
@@ -285,7 +286,7 @@ def windowed_fft(q, slide=False, debug=False, noise_model=None):
               # Empty the window completely for copy-paste style processing
               window = []
           else:
-            print "Entering actual meditation processing"
+            print "Meditating..."
             # EEG, x, y, z
             eeg = np.array([item['eeg'] for item in window])
 
@@ -313,7 +314,6 @@ def windowed_fft(q, slide=False, debug=False, noise_model=None):
             eegf = 2.0/N * np.abs(eegf[0:N/2])
 
             # Get the theta, alpha, beta, gamma average magnitudes
-
             theta_avg, alpha_avg, beta_avg, gamma_avg = get_mean_eeg_spectrums(eegf)
 
             # Comment this for the PI
