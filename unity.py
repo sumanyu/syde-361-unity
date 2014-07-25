@@ -316,13 +316,6 @@ def windowed_fft(q, slide=False, debug=False, noise_model=None):
             # Get the theta, alpha, beta, gamma average magnitudes
             theta_avg, alpha_avg, beta_avg, gamma_avg = get_mean_eeg_spectrums(eegf)
 
-            # Comment this for the PI
-            theta.append(theta_avg)
-            alpha.append(alpha_avg)
-            beta.append(beta_avg)
-            gamma.append(gamma_avg)
-            output = bound_output(output)
-
             # Compute output
             noise = np.random.normal(mu, sigma, size)[0]
             expo = np.exp([-t/time_scale])[0]
@@ -334,6 +327,13 @@ def windowed_fft(q, slide=False, debug=False, noise_model=None):
             output += x/30.0
             output += y/30.0
             output += z/30.0
+
+            # Comment this for the PI
+            theta.append(theta_avg)
+            alpha.append(alpha_avg)
+            beta.append(beta_avg)
+            gamma.append(gamma_avg)
+            output = bound_output(output)
 
             if pygame.mixer.music.get_busy():
               adjustVol(output)
