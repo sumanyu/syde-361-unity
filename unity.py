@@ -139,49 +139,7 @@ def get_data(file_name):
       data['z'].append(z)
 
   return data
-"""
-def interactive_plot(q):
-  # Interactive on
-  plt.ion()
 
-  plt.xlabel('Time (s)')
-  plt.ylabel('EEG (mV)')
-  plt.title('EEG vs. Time')
-  plt.axis([0, 40000, -1000, 1000])
-
-  plt.show()
-
-  # x = data['x']
-  # y = data['y']
-
-  xs = np.array([])
-  ys = np.array([])
-
-  ax = plt.figure().gca()
-
-  line, = ax.plot(xs, ys)
-
-  # for x, y in zip(data['x'], data['y'])[0::100]:
-  rate = 512
-  i = 0
-  while not q.empty():
-    if i%rate:
-      i = 0
-      continue
-    i += 1
-
-    d = q.get()
-    x = d['x']
-    y = d['y']
-    xs = np.append(xs, x)
-    ys = np.append(ys, y)
-    line.set_data(xs, ys)
-    plt.scatter(x, y, s=1)
-    plt.draw()
-    # time.sleep(0.000001)
-
-  plt.ioff()
-"""
 def get_noise_model(q, debug=True):
   # Constructs a noise model that will be used to offset the actual signal from the sensor
 
@@ -479,56 +437,6 @@ def windowed_fft(q, slide=False, debug=False, noise_model=None):
         #print "queue is empty :("
         time.sleep(1)
 
-"""
-def process_data(data):
-  # Number of samplepoints
-  N = len(data['x'])
-
-  # sample spacing - Play around with this
-  # This is approximately the spacing of the actual data
-  T = 1.0 / 550.0
-  # x = np.linspace(0.0, N*T, N)
-  
-  x = np.array(data['x'])
-  y = np.array(data['y'])
-
-  # Frequency domain
-  yf = fft(y)
-
-  # Use simplifying assumption that x are evenly spaced
-  xf = np.linspace(0.0, 1.0/(2.0*T), N/2)
-
-  # First figure
-  plt.figure(1)
-
-  # Time domain
-  plt.subplot(211)
-  plt.plot(data['x'], data['y'])
-  plt.xlabel('Time (s)')
-  plt.ylabel('EEG (mV)')
-  plt.title('EEG vs. Time')
-
-  # Frequency domain
-  plt.subplot(212)
-  plt.plot(xf, 2.0/N * np.abs(yf[0:N/2]))
-  plt.xlabel('Frequency (Hz)')
-  plt.ylabel('Magnitude (dB)')
-  plt.title('Magnitude vs. Frequency')
-
-  # xmin xmax ymin ymax
-  plt.axis([1, 40, 0, 6])
-
-  # plt.plot(data['x'], data['y'])
-  plt.grid()
-  plt.show()
-
-def restrict_data(data, factor):
-  for key in data:
-    to = len(data[key])/factor
-    data[key] = data[key][0: to]
-
-  return data
-"""
 def playMusic():
     #check for user input of starting session
     pygame.mixer.music.load("enya.mp3")
