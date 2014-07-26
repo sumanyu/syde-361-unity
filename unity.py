@@ -570,6 +570,7 @@ def main():
     ui_init()
     QtGui.QApplication.instance().exec_()
 
+    print "Closing application"
     # Close application
     global exit_app
     global modelling_noise
@@ -580,11 +581,14 @@ def main():
     start_session = False
     pygame.mixer.music.stop()
 
+    print "Joining threads"
     for t in threads:
         t.join()
 
+    print "Removing pipes"
     for num in range(1, 11):
         os.remove(pipe + str(num))
+
     print "main exits"
 
 if __name__ == "__main__":
