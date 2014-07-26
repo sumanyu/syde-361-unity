@@ -507,6 +507,11 @@ def stop_calibration(timeout):
             calibrating = False
             break
 
+def runner(q):
+  noise_model = get_noise_model(q)
+
+  windowed_fft(q, slide=False, debug=True, noise_model=noise_model)
+
 def main():
   if '--data' in sys.argv:
     file_name = sys.argv[2]
@@ -532,20 +537,24 @@ def main():
     threads.append(thread_music)
     thread_music.start()
 
-    thread_stopNoise = threading.Thread(target=stopNoise, args=(20,))
-    threads.append(thread_stopNoise)
-    thread_stopNoise.start()
+    thread_runner = threading.Thread(target=runner, args=(q,))
+    threads.append(thread_runner)
+    thread_runner.start()
 
-    noise_model = get_noise_model(q)
+    # thread_stopNoise = threading.Thread(target=stopNoise, args=(20,))
+    # threads.append(thread_stopNoise)
+    # thread_stopNoise.start()
+
+    # noise_model = get_noise_model(q)
 
     # Set warm up for 5 seconds. We can hook this up to an actual function later.
-    thread_stop_calibration = threading.Thread(target=stop_calibration, args=(10,))
-    threads.append(thread_stop_calibration)
-    thread_stop_calibration.start()
+    # thread_stop_calibration = threading.Thread(target=stop_calibration, args=(10,))
+    # threads.append(thread_stop_calibration)
+    # thread_stop_calibration.start()
 
-    thread_fft = threading.Thread(target=windowed_fft, args=(q, False, True, noise_model,))
-    threads.append(thread_fft)
-    thread_fft.start()
+    # thread_fft = threading.Thread(target=windowed_fft, args=(q, False, True, noise_model,))
+    # threads.append(thread_fft)
+    # thread_fft.start()
     #windowed_fft(q, slide=False, debug=True, noise_model=noise_model)
 
     for t in threads:
