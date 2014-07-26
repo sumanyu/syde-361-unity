@@ -156,12 +156,12 @@ def get_noise_model(q, debug=True):
 
   while modelling_noise:
     if q:
-      print "noise modelling: collecting noise..."
       datum = q.popleft()
 
       if len(window) < N:
         window.append(datum)
       else:
+        print "noise modelling: collecting noise..."
         for array, label in zip([eeg_avg, x_avg, y_avg, z_avg], ['eeg', 'x', 'y', 'z']):
           avg = np.mean([item[label] for item in window])
           array.append(avg)
