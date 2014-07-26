@@ -627,9 +627,9 @@ def main():
         threads.append(thread)
         thread.start()
 
-    thread_music = threading.Thread(target=playMusic, args=())
-    threads.append(thread_music)
-    thread_music.start()
+    # thread_music = threading.Thread(target=playMusic, args=())
+    # threads.append(thread_music)
+    # thread_music.start()
 
     thread_runner = threading.Thread(target=runner, args=(q,))
     threads.append(thread_runner)
