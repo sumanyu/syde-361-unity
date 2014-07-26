@@ -578,6 +578,7 @@ def main():
     exit_app = True
     modelling_noise = False
     start_session = False
+    pygame.mixer.music.stop()
 
     for t in threads:
         t.join()
