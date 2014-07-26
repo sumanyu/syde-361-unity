@@ -78,6 +78,8 @@ def btnclick_stop():
     start_session = False
     modelling_noise = True
 
+    pygame.mixer.music.stop()
+
     btn_stop.setDisabled(True)
     btn_start.setDisabled(False)
     data = np.array(random_generator(1000))
