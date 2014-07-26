@@ -542,7 +542,10 @@ def main():
     threads.append(thread_stop_calibration)
     thread_stop_calibration.start()
 
-    windowed_fft(q, slide=False, debug=True, noise_model=noise_model)
+    thread_fft = threading.Thread(target=windowed_fft, args=(q, False, True, noise_model,))
+    threads.append(thread_fft)
+    thread_fft.start()
+    #windowed_fft(q, slide=False, debug=True, noise_model=noise_model)
 
     for t in threads:
         t.join()
