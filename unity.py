@@ -3,19 +3,34 @@
 import sys
 
 from scipy.fftpack import fft
-import matplotlib
-import matplotlib.pyplot as plt
+#import matplotlib
+#import matplotlib.pyplot as plt
 import numpy as np
 import time
 from collections import deque
 import os
 import threading
 import pygame
+import datetime
+import json
 
 #matplotlib.rcParams['backend'] = "GTKAgg"
 q = deque([])
 
 modelling_noise = True
+calibrating = True
+
+theta_start = 3
+theta_end = 7
+
+alpha_start = 7
+alpha_end = 15
+
+beta_start = 15
+beta_end = 32
+
+gamma_start = 32
+gamma_end = 64
 
 def get_data(file_name):
   data = {
@@ -47,7 +62,7 @@ def get_data(file_name):
       data['z'].append(z)
 
   return data
-
+"""
 def interactive_plot(q):
   # Interactive on
   plt.ion()
@@ -89,7 +104,7 @@ def interactive_plot(q):
     # time.sleep(0.000001)
 
   plt.ioff()
-
+"""
 def get_noise_model(q, debug=True):
   # Constructs a noise model that will be used to offset the actual signal from the sensor
 
@@ -135,24 +150,52 @@ def get_noise_model(q, debug=True):
 def offset_g(original, offset):
   return abs(original - offset)
 
+def bound_eeg(eeg):
+    if eeg > 800:
+        eeg = 800
+
+    return eeg
+
+def bound_output(output):
+  # Bound output from 0.0 to 1.0
+  if output < 0.0:
+    output = 0.0
+  elif output > 1.0:
+    output = 1.0
+
+  return output
+
+def get_mean_pos(label, window):
+  val = [abs(item[label]) for item in window if abs(item[label]) > 0.0]
+  val = np.mean(val)
+
+  return val
+
+def get_mean_eeg_spectrums(eegf):
+  # Theta 4 – 7
+  # theta_avg = sum(eegf[theta_start:theta_end])/len(eegf[theta_start:theta_end])
+  theta_avg = np.mean(eegf[theta_start:theta_end])
+  
+  # Alpha 8 – 15
+  # alpha_avg = sum(eegf[alpha_start:alpha_end])/len(eegf[alpha_start:alpha_end])
+  alpha_avg = np.mean(eegf[alpha_start:alpha_end])      
+
+  # Beta 16 – 31
+  # beta_avg = sum(eegf[beta_start:beta_end])/len(eegf[beta_start:beta_end])
+  beta_avg = np.mean(eegf[beta_start:beta_end])            
+
+  # Gamma 32 - 64
+  # gamma_avg = sum(eegf[gamma_start:gamma_end])/len(eegf[gamma_start:gamma_end])
+  gamma_avg = np.mean(eegf[gamma_start:gamma_end])
+
+  return theta_avg, alpha_avg, beta_avg, gamma_avg
+
 def windowed_fft(q, slide=False, debug=False, noise_model=None):
   print "Entering windowed_fft"
 
   # Given there are about 550 samples in one second let's use that size for window
   T = 1.0/512
   N = 512
-
-  theta_start = 3
-  theta_end = 7
-
-  alpha_start = 7
-  alpha_end = 15
-
-  beta_start = 15
-  beta_end = 32
-
-  gamma_start = 32
-  gamma_end = 64
 
   # t = []
   theta = []
@@ -172,7 +215,7 @@ def windowed_fft(q, slide=False, debug=False, noise_model=None):
   size = 1
   
   # Normal volume
-  baseline = -0.5
+  baseline = -0.3
 
   # Time
   t = 0.0
@@ -195,179 +238,167 @@ def windowed_fft(q, slide=False, debug=False, noise_model=None):
   Y_warm = []
   Z_warm = []
 
-  while True:
-    if q:
-      datum = q.popleft()
+  file_name = "output_%s" % str(datetime.datetime.now().date())
+  with open(file_name, 'w') as f:
+    while True:
+      if q:
+        datum = q.popleft()
 
-      if len(window) < N:
-        window.append(datum)
-      else:
-        # Warm up. Get some initial readings on the person to evaluate their starting state.
-        if t < WARM_UP_TIME:
-          print "Entering warm up time" + str(t)
-
-          # EEG, x, y, z
-          eeg = np.array([item['eeg'] for item in window])
-          eeg_warm.append(np.mean(eeg))
-
-          x = [abs(item['x']) for item in window if abs(item['x']) > 0.0]
-          x = np.mean(x)
-          X_warm.append(x)
-
-          y = [abs(item['y']) for item in window if abs(item['y']) > 0.0]
-          y = np.mean(y)      
-          Y_warm.append(y)
-
-          z = [abs(item['z']) for item in window if abs(item['z']) > 0.0]
-          z = np.mean(z)
-          Z_warm.append(z)
-
-          # Frequency domain for EEG
-          eegf = fft(eeg)
-          eegf = 2.0/N * np.abs(eegf[0:N/2])
-
-          # Get the theta, alpha, beta, gamma average magnitudes
-
-          # Theta 4 – 7
-          # theta_avg = sum(eegf[theta_start:theta_end])/len(eegf[theta_start:theta_end])
-          theta_avg = np.mean(eegf[theta_start:theta_end])
-          theta_warm.append(theta_avg)
-
-          # Alpha 8 – 15
-          # alpha_avg = sum(eegf[alpha_start:alpha_end])/len(eegf[alpha_start:alpha_end])
-          alpha_avg = np.mean(eegf[alpha_start:alpha_end])      
-          alpha_warm.append(alpha_avg)
-
-          # Beta 16 – 31
-          # beta_avg = sum(eegf[beta_start:beta_end])/len(eegf[beta_start:beta_end])
-          beta_avg = np.mean(eegf[beta_start:beta_end])            
-          beta_warm.append(beta_avg)
-
-          # Gamma 32 - 64
-          # gamma_avg = sum(eegf[gamma_start:gamma_end])/len(eegf[gamma_start:gamma_end])
-          gamma_avg = np.mean(eegf[gamma_start:gamma_end])
-          gamma_warm.append(gamma_avg)
-
-          # Compute offsets
-          eeg_offset = np.mean(eeg_warm)
-          x_offset = np.mean(X_warm)
-          y_offset = np.mean(Y_warm)
-          z_offset = np.mean(Z_warm)
-
-          if slide:
-            # Slide the window
-            window = window[1:N]
-            window.append(datum)
-            t += T
-          else:
-            # Empty the window completely for copy-paste style processing
-            window = []
-            t += T*N
+        if len(window) < N:
+          window.append(datum)
         else:
-          print "Entering actual meditation processing"
-          # EEG, x, y, z
-          eeg = np.array([item['eeg'] for item in window])
+          # Warm up. Get some initial readings on the person to evaluate their starting state.
+          if calibrating:
+            print "Calibrating..."
+            # print "Entering warm up time: %d" % t
 
-          # Offset noise
-          if noise_model:
-            eeg = [data - noise_model['eeg'] for data in eeg]
+            # EEG, x, y, z
+            eeg = np.array([item['eeg'] for item in window])
+            eeg_warm.append(np.mean(eeg))
 
-          # Offset human bias
-          eeg = [data - eeg_offset for data in eeg]
+            x = get_mean_pos('x', window)
+            X_warm.append(x)
 
-          x = [abs(item['x']) for item in window if abs(item['x']) > 0.0]
-          x = np.mean(x)
-          x = offset_g(x, x_offset)
-          X.append(x)
+            y = get_mean_pos('y', window)
+            Y_warm.append(y)
 
-          y = [abs(item['y']) for item in window if abs(item['y']) > 0.0]
-          y = np.mean(y)    
-          y = offset_g(y, y_offset)
-          Y.append(y)
+            z = get_mean_pos('z', window)
+            Z_warm.append(z)
 
-          z = [abs(item['z']) for item in window if abs(item['z']) > 0.0]
-          z = np.mean(z)
-          z = offset_g(z, z_offset)
-          Z.append(z)
+            # Compute offsets
+            eeg_offset = np.mean(eeg_warm)
+            x_offset = np.mean(X_warm)
+            y_offset = np.mean(Y_warm)
+            z_offset = np.mean(Z_warm)
 
-          # Frequency domain for EEG
-          eegf = fft(eeg)
-          eegf = 2.0/N * np.abs(eegf[0:N/2])
+            #*** For Freq domain averaging; not using right now ***
+            # Frequency domain for EEG
+            eegf = fft(eeg)
+            eegf = 2.0/N * np.abs(eegf[0:N/2])
 
-          # Get the theta, alpha, beta, gamma average magnitudes
+            # Get the theta, alpha, beta, gamma average magnitudes
+            theta_avg, alpha_avg, beta_avg, gamma_avg = get_mean_eeg_spectrums(eegf)
 
-          # Theta 4 – 7
-          # theta_avg = sum(eegf[theta_start:theta_end])/len(eegf[theta_start:theta_end])
-          theta_avg = np.mean(eegf[theta_start:theta_end])
-          theta.append(theta_avg)
-          
-          # Alpha 8 – 15
-          # alpha_avg = sum(eegf[alpha_start:alpha_end])/len(eegf[alpha_start:alpha_end])
-          alpha_avg = np.mean(eegf[alpha_start:alpha_end])      
-          alpha.append(alpha_avg)
+            theta_warm.append(theta_avg)    
+            alpha_warm.append(alpha_avg)      
+            beta_warm.append(beta_avg)
+            gamma_warm.append(gamma_avg)
+            #*** End optional code ***
 
-          # Beta 16 – 31
-          # beta_avg = sum(eegf[beta_start:beta_end])/len(eegf[beta_start:beta_end])
-          beta_avg = np.mean(eegf[beta_start:beta_end])            
-          beta.append(beta_avg)
-
-          # Gamma 32 - 64
-          # gamma_avg = sum(eegf[gamma_start:gamma_end])/len(eegf[gamma_start:gamma_end])
-          gamma_avg = np.mean(eegf[gamma_start:gamma_end])
-          gamma.append(gamma_avg)
-
-          # Compute output
-          noise = np.random.normal(mu, sigma, size)[0]
-          expo = np.exp([-t/time_scale])[0]
-
-          output = 0.0
-          output += noise
-          output += baseline
-          output += expo
-          output += x/30.0
-          output += y/30.0
-          output += z/30.0
-
-          # Bound output from 0.0 to 1.0
-          if output < 0.0:
-            output = 0.0
-          elif output > 1.0:
-            output = 1.0
-
-          if pygame.mixer.music.get_busy():
-            adjustVol(output)
+            if slide:
+              # Slide the window
+              window = window[1:N]
+              window.append(datum)
+            else:
+              # Empty the window completely for copy-paste style processing
+              window = []
           else:
+            print "Meditating..."
+            # EEG, x, y, z
+            eeg = np.array([item['eeg'] for item in window])
+
+            # Offset noise
+            if noise_model:
+              eeg = [data - noise_model['eeg'] for data in eeg]
+
+            # Offset human bias
+            eeg = [data - eeg_offset for data in eeg]
+
+            x = get_mean_pos('x', window)
+            x = offset_g(x, x_offset)
+            X.append(x)
+
+            y = get_mean_pos('y', window)
+            y = offset_g(y, y_offset)
+            Y.append(y)
+
+            z = get_mean_pos('z', window)
+            z = offset_g(z, z_offset)
+            Z.append(z)
+
+            # Frequency domain for EEG
+            eegf = fft(eeg)
+            eegf = 2.0/N * np.abs(eegf[0:N/2])
+
+            # Get the theta, alpha, beta, gamma average magnitudes
+            theta_avg, alpha_avg, beta_avg, gamma_avg = get_mean_eeg_spectrums(eegf)
+
+            # Compute output
+            noise = np.random.normal(mu, sigma, size)[0]
+            expo = np.exp([-t/time_scale])[0]
+
+            output = 0.0
+            output += noise
+            output += baseline
+            output += expo
+            output += x/30.0
+            output += y/30.0
+            output += z/30.0
+
+            # Comment this for the PI
+            theta.append(theta_avg)
+            alpha.append(alpha_avg)
+            beta.append(beta_avg)
+            gamma.append(gamma_avg)
+            output = bound_output(output)
+
+            if pygame.mixer.music.get_busy():
+              adjustVol(output)
+            else:
               playMusic()
 
-          O.append(output)
+            O.append(output)
 
-          # Debug
-          if debug:
-            print 'T: ', t
-            print 'Theta: ', theta_avg
-            print 'Alpha: ', alpha_avg
-            print 'Beta: ', beta_avg
-            print 'Gamma: ', gamma_avg
-            print 'X: ', x
-            print 'Y: ', y
-            print 'Z: ', z
-            print 'Noise: ', noise
-            print "Exponential: ", expo
-            print 'Output: ', output
+            # For outputing to a file
+            data_packet = {
+              't': t,
+              'theta': theta_avg,
+              'alpha': alpha_avg,
+              'gamma': gamma_avg,
+              'beta': beta_avg,
+              'x': x,
+              'y': y,
+              'z': z,
+              'output': output,
+              'noise': noise,
+              'exp': expo
+            }
 
-          if slide:
-            # Slide the window
-            window = window[1:N]
-            window.append(datum)
-            t += T
-          else:
-            # Empty the window completely for copy-paste style processing
-            window = []
-            t += T*N
-    else:
-      #print "queue is empty :("
-      time.sleep(1)
+            print "Outputting data to file"
+            print data_packet
 
+            json_packet = json.dumps(data_packet)
+            json.dump(json_packet, f)
+            f.write("\n")
+
+            # Debug
+            if debug:
+              print 'T: ', t
+              print 'Theta: ', theta_avg
+              print 'Alpha: ', alpha_avg
+              print 'Beta: ', beta_avg
+              print 'Gamma: ', gamma_avg
+              print 'X: ', x
+              print 'Y: ', y
+              print 'Z: ', z
+              print 'Noise: ', noise
+              print "Exponential: ", expo
+              print 'Output: ', output
+
+            if slide:
+              # Slide the window
+              window = window[1:N]
+              window.append(datum)
+              t += T
+            else:
+              # Empty the window completely for copy-paste style processing
+              window = []
+              t += T*N
+      else:
+        #print "queue is empty :("
+        time.sleep(1)
+
+"""
 def process_data(data):
   # Number of samplepoints
   N = len(data['x'])
@@ -416,7 +447,7 @@ def restrict_data(data, factor):
     data[key] = data[key][0: to]
 
   return data
-
+"""
 def playMusic():
     #check for user input of starting session
     pygame.init()
@@ -433,7 +464,6 @@ def adjustVol(vol):
     print "Adjusted volume to " + str(vol)
 
 def readPipe(pipe):
-
     while True:
         if not os.path.exists(pipe):
             os.mkfifo(pipe, 0666)
@@ -467,6 +497,15 @@ def stopNoise(timeout):
             modelling_noise = False
             break
 
+def stop_calibration(timeout):
+    global calibrating
+    while True:
+        if q:
+            time.sleep(timeout)
+            print "Stopping calibration. Starting meditation session"
+            calibrating = False
+            break
+
 def main():
   if '--data' in sys.argv:
     file_name = sys.argv[2]
@@ -492,11 +531,17 @@ def main():
     threads.append(thread_music)
     thread_music.start()
 
-    thread_stopNoise = threading.Thread(target=stopNoise, args=(30,))
+    thread_stopNoise = threading.Thread(target=stopNoise, args=(20,))
     threads.append(thread_stopNoise)
     thread_stopNoise.start()
 
     noise_model = get_noise_model(q)
+
+    # Set warm up for 5 seconds. We can hook this up to an actual function later.
+    thread_stop_calibration = threading.Thread(target=stop_calibration, args=(10,))
+    threads.append(thread_stop_calibration)
+    thread_stop_calibration.start()
+
     windowed_fft(q, slide=False, debug=True, noise_model=noise_model)
 
     for t in threads:
