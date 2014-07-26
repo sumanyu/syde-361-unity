@@ -60,6 +60,7 @@ def btnclick_start():
 
     nr = layout.count()
     for i in reversed(range(nr, 1, -1)):
+      if layout.itemAt(i):
         layout.itemAt(i).widget().deleteLater()
 
     #TODO: resizing doesn't work as expected
