@@ -25,7 +25,8 @@ plot = pg.PlotWidget()
 mw.show()
 
 def updateUI():
-    print "updateUI cliked"
+    #do stuff for ui if needed
+    print "updateUI clicked"
 
 ## Start a timer to rapidly update the plot in widget
 # t = QtCore.QTimer()
@@ -33,25 +34,40 @@ def updateUI():
 # t.start(1000)
 
 def btnclick_start():
+    nr = layout.count()
+    for i in reversed(range(nr, 1, -1)):
+        layout.itemAt(i).widget().deleteLater()
+
+    #TODO: resizing doesn't work as expected
+    mw.resize(100,100)
+    mw.show()
+
+    btn_stop.setDisabled(True)
+    btn_stop.setDisabled(False)
     #add function here to start calibration
     updateUI()
 
 def btnclick_stop():
-    data = random_generator(100)
-    report_plot(1,data)
+    btn_stop.setDisabled(True)
+    btn_start.setDisabled(False)
+    data = np.array(random_generator(1000))
+
+    #get data here
+    for i in range(3):
+        report_plot(i,data)
 
 btn_start.clicked.connect(btnclick_start)
 btn_stop.clicked.connect(btnclick_stop)
 
 def report_plot(nr, data):
-    y = np.array(random_generator(1000))
+    y = data
     #y_max = np.hstack(y).max(axis = 0)
     #x_max = y.size//512
     y_max = 1
     x_max = 120
 
     pw_report = pg.PlotWidget()
-    layout.addWidget(pw_report, 2, 0)
+    layout.addWidget(pw_report, nr + 3, 0)
     pw_report.setLabel('left', 'Magnitude', units='dB')
     pw_report.setLabel('bottom', 'Time', units='s')
     # pw_report.setXRange(0, x_max)
@@ -59,7 +75,7 @@ def report_plot(nr, data):
     pw_report.plot(y)
 
     #fiddle with this for additional plots
-    mw.resize(800,800)
+    mw.resize(500,500)
 
 def random_generator(n):
     data_x = np.random.random(n)
