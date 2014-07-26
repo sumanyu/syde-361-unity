@@ -13,6 +13,9 @@ import threading
 import pygame
 import datetime
 import json
+from pyqtgraph.Qt import QtGui, QtCore
+import numpy as np
+import pyqtgraph as pg
 
 #matplotlib.rcParams['backend'] = "GTKAgg"
 q = deque([])
@@ -556,6 +559,29 @@ def main():
     # threads.append(thread_fft)
     # thread_fft.start()
     #windowed_fft(q, slide=False, debug=True, noise_model=noise_model)
+
+    #UI INITIALIZATIONS
+    app = QtGui.QApplication([])
+    mw = QtGui.QMainWindow()
+    mw.setWindowTitle('Unity - MDI')
+    mw.resize(100,100)
+    cw = QtGui.QWidget()
+    mw.setCentralWidget(cw)
+
+    #Create layout to manage widgets size and positions
+    layout = QtGui.QGridLayout()
+    cw.setLayout(layout)
+
+    btn_start = QtGui.QPushButton('Start Meditation')
+    btn_stop = QtGui.QPushButton('End Session')
+    layout.addWidget(btn_start,0,0)
+    layout.addWidget(btn_stop,1,0)
+
+    plot = pg.PlotWidget()
+
+    mw.show()
+    QtGui.QApplication.instance().exec_()
+
 
     for t in threads:
         t.join()
