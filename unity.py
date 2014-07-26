@@ -198,6 +198,7 @@ def get_noise_model(q, debug=True):
 
   while modelling_noise:
     if q:
+      print "noise modelling: collecting noise..."
       datum = q.popleft()
 
       if len(window) < N:
@@ -211,12 +212,15 @@ def get_noise_model(q, debug=True):
       time.sleep(1)
 
   # Return average of the averaged values
-  averages = {
-    'eeg': np.mean(eeg_avg),
-    'x': np.mean(x_avg),
-    'y': np.mean(y_avg),
-    'z': np.mean(z_avg)
-  }
+  averages = dict()
+
+  if eeg_avg:
+    averages = {
+      'eeg': np.mean(eeg_avg),
+      'x': np.mean(x_avg),
+      'y': np.mean(y_avg),
+      'z': np.mean(z_avg)
+    }
 
   if debug:
     print "noise modelling: "
@@ -657,7 +661,12 @@ def main():
 
     # Close application
     global exit_app
+    global modelling_noise
+    global start_session
+
     exit_app = True
+    modelling_noise = False
+    start_session = False
 
     for t in threads:
         t.join()
