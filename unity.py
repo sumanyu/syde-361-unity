@@ -655,6 +655,10 @@ def main():
     ui_init()
     QtGui.QApplication.instance().exec_()
 
+    # Close application
+    global exit_app
+    exit_app = True
+
     for t in threads:
         t.join()
 
