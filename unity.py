@@ -23,6 +23,7 @@ q = deque([])
 modelling_noise = True
 calibrating = True
 start_session = True
+exit_app = False
 
 theta_start = 3
 theta_end = 7
@@ -38,30 +39,22 @@ gamma_end = 64
 
 app = QtGui.QApplication([])
 mw = QtGui.QMainWindow()
-mw.setWindowTitle('Unity - MDI')
-mw.resize(100,100)
-cw = QtGui.QWidget()
-mw.setCentralWidget(cw)
-
 #Create layout to manage widgets size and positions
 layout = QtGui.QGridLayout()
-cw.setLayout(layout)
 
 btn_start = QtGui.QPushButton('Start Meditation')
 btn_stop = QtGui.QPushButton('End Session')
-layout.addWidget(btn_start,0,0)
-layout.addWidget(btn_stop,1,0)
-
-plot = pg.PlotWidget()
-mw.show()
-btn_start.clicked.connect(btnclick_start)
-btn_stop.clicked.connect(btnclick_stop)
 
 def updateUI():
     #do stuff for ui if needed
     print "updateUI clicked"
 
 def btnclick_start():
+    global modelling_noise
+    global start_session
+    modelling_noise = False
+    start_session = True
+
     nr = layout.count()
     for i in reversed(range(nr, 1, -1)):
         layout.itemAt(i).widget().deleteLater()
@@ -76,6 +69,11 @@ def btnclick_start():
     updateUI()
 
 def btnclick_stop():
+    global modelling_noise
+    global start_session
+    start_session = False
+    modelling_noise = True
+
     btn_stop.setDisabled(True)
     btn_start.setDisabled(False)
     data = np.array(random_generator(1000))
@@ -425,26 +423,26 @@ def windowed_fft(q, slide=False, debug=False, noise_model=None):
             O.append(output)
 
             # For outputing to a file
-            data_packet = {
-              't': t,
-              'theta': theta_avg,
-              'alpha': alpha_avg,
-              'gamma': gamma_avg,
-              'beta': beta_avg,
-              'x': x,
-              'y': y,
-              'z': z,
-              'output': output,
-              'noise': noise,
-              'exp': expo
-            }
+            # data_packet = {
+            #   't': t,
+            #   'theta': theta_avg,
+            #   'alpha': alpha_avg,
+            #   'gamma': gamma_avg,
+            #   'beta': beta_avg,
+            #   'x': x,
+            #   'y': y,
+            #   'z': z,
+            #   'output': output,
+            #   'noise': noise,
+            #   'exp': expo
+            # }
 
-            print "Outputting data to file"
-            print data_packet
+            # print "Outputting data to file"
+            # print data_packet
 
-            json_packet = json.dumps(data_packet)
-            json.dump(json_packet, f)
-            f.write("\n")
+            # json_packet = json.dumps(data_packet)
+            # json.dump(json_packet, f)
+            # f.write("\n")
 
             # Debug
             if debug:
@@ -582,9 +580,27 @@ def stop_calibration(timeout):
             break
 
 def runner(q):
-  noise_model = get_noise_model(q)
+  while not exit_app:
+    noise_model = get_noise_model(q)
 
-  windowed_fft(q, slide=False, debug=True, noise_model=noise_model)
+    # Set warm up for 5 seconds. We can hook this up to an actual function later.
+    thread_stop_calibration = threading.Thread(target=stop_calibration, args=(10,))
+    thread_stop_calibration.start()
+
+    windowed_fft(q, slide=False, debug=True, noise_model=noise_model)
+
+def ui_init():
+  mw.setWindowTitle('Unity - MDI')
+  mw.resize(100,100)
+  cw = QtGui.QWidget()
+  mw.setCentralWidget(cw)
+  cw.setLayout(layout)
+  layout.addWidget(btn_start,0,0)
+  layout.addWidget(btn_stop,1,0)
+
+  mw.show()
+  btn_start.clicked.connect(btnclick_start)
+  btn_stop.clicked.connect(btnclick_stop)
 
 def main():
   if '--data' in sys.argv:
@@ -632,28 +648,8 @@ def main():
     #windowed_fft(q, slide=False, debug=True, noise_model=noise_model)
 
     #UI INITIALIZATIONS
-    app = QtGui.QApplication([])
-    mw = QtGui.QMainWindow()
-    mw.setWindowTitle('Unity - MDI')
-    mw.resize(100,100)
-    cw = QtGui.QWidget()
-    mw.setCentralWidget(cw)
-
-    #Create layout to manage widgets size and positions
-    layout = QtGui.QGridLayout()
-    cw.setLayout(layout)
-
-    btn_start = QtGui.QPushButton('Start Meditation')
-    btn_stop = QtGui.QPushButton('End Session')
-    layout.addWidget(btn_start,0,0)
-    layout.addWidget(btn_stop,1,0)
-
-    plot = pg.PlotWidget()
-    mw.show()
-    btn_start.clicked.connect(btnclick_start)
-    btn_stop.clicked.connect(btnclick_stop)
+    ui_init()
     QtGui.QApplication.instance().exec_()
-
 
     for t in threads:
         t.join()
@@ -661,8 +657,6 @@ def main():
     for num in range(1, 11):
         os.remove(pipe + str(num))
     print "main exits"
-
-
 
 if __name__ == "__main__":
   main()
