@@ -19,6 +19,7 @@ q = deque([])
 
 modelling_noise = True
 calibrating = True
+start_session = True
 
 theta_start = 3
 theta_end = 7
@@ -240,7 +241,7 @@ def windowed_fft(q, slide=False, debug=False, noise_model=None):
 
   file_name = "output_%s" % str(datetime.datetime.now().date())
   with open(file_name, 'w') as f:
-    while True:
+    while start_session:
       if q:
         datum = q.popleft()
 
