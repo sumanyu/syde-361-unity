@@ -531,7 +531,6 @@ def restrict_data(data, factor):
 """
 def playMusic():
     #check for user input of starting session
-    pygame.init()
     pygame.mixer.music.load("enya.mp3")
     pygame.mixer.music.play(0)
 
@@ -634,6 +633,8 @@ def main():
     # thread_music = threading.Thread(target=playMusic, args=())
     # threads.append(thread_music)
     # thread_music.start()
+
+    pygame.init()
 
     thread_runner = threading.Thread(target=runner, args=(q,))
     threads.append(thread_runner)
