@@ -52,8 +52,11 @@ def updateUI():
 def btnclick_start():
     global modelling_noise
     global start_session
+    global calibrating
+
     modelling_noise = False
     start_session = True
+    calibrating = True
 
     nr = layout.count()
     for i in reversed(range(nr, 1, -1)):
