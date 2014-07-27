@@ -5,17 +5,16 @@ import sys
 from scipy.fftpack import fft
 #import matplotlib
 #import matplotlib.pyplot as plt
-import numpy as np
 import time
 from collections import deque
 import os
 import threading
 import pygame
 import datetime
-import json
-from pyqtgraph.Qt import QtGui, QtCore
+from pyqtgraph.Qt import QtGui
 import numpy as np
 import pyqtgraph as pg
+import PyQt4.QtCore
 
 #matplotlib.rcParams['backend'] = "GTKAgg"
 q = deque([])
@@ -37,16 +36,42 @@ beta_end = 32
 gamma_start = 32
 gamma_end = 64
 
+theta = []
+alpha = []
+beta = []
+gamma = []
+X = []
+Y = []
+Z = []
+O = []
+
 app = QtGui.QApplication([])
 mw = QtGui.QMainWindow()
+mw.setMinimumSize(400, 150)
 #Create layout to manage widgets size and positions
 layout = QtGui.QGridLayout()
+timer = PyQt4.QtCore.QTimer(app)
 
 btn_start = QtGui.QPushButton('Start Meditation')
+btn_start.setToolTip('This initiates the calibration phase for meditating')
+btn_start.setMaximumSize(btn_start.sizeHint())
 btn_stop = QtGui.QPushButton('End Session')
+btn_stop.setToolTip('Generate a report of your session')
+btn_stop.setMaximumSize(btn_start.sizeHint())
 
-def updateUI():
+def updateUI(state):
     #do stuff for ui if needed
+    # if calibrating:
+    #     #set an hourglass on a timer
+
+    if state is 'stopped':
+        btn_start.setText('Start Meditation')
+        btn_stop.hide()
+
+    if state is 'started':
+        btn_start.setText('Analyzing')
+        btn_stop.show()
+
     print "updateUI clicked"
 
 def btnclick_start():
@@ -58,19 +83,19 @@ def btnclick_start():
     start_session = True
     calibrating = True
 
+    #reset layout to remove graphs
     nr = layout.count()
     for i in reversed(range(nr, 1, -1)):
       if layout.itemAt(i):
         layout.itemAt(i).widget().deleteLater()
 
-    #TODO: resizing doesn't work as expected
-    mw.resize(100,100)
-    mw.show()
+    mw.resize(100, 100)
 
-    btn_stop.setDisabled(True)
+    btn_start.setDisabled(True)
+
     btn_stop.setDisabled(False)
     #add function here to start calibration
-    updateUI()
+    updateUI(state = 'started')
 
 def btnclick_stop():
     global modelling_noise
@@ -82,29 +107,37 @@ def btnclick_stop():
 
     btn_stop.setDisabled(True)
     btn_start.setDisabled(False)
-    data = np.array(random_generator(1000))
+    #data = np.array(random_generator(1000))
 
-    #get data here
-    for i in range(3):
-        report_plot(i,data)
+    report_plot(0, theta, 'Theta Brain Waves')
+    report_plot(1, alpha, 'Alpha Brain Waves')
+    report_plot(2, O, 'Volume')
 
-def report_plot(nr, data):
+    mw.resize(800, 800)
+
+    updateUI(state = 'stopped')
+
+
+
+
+
+def report_plot(nr, data, plotname):
     y = data
     #y_max = np.hstack(y).max(axis = 0)
     #x_max = y.size//512
-    y_max = 1
-    x_max = 120
+    #y_max = 1
+    #x_max = 120
 
     pw_report = pg.PlotWidget()
     layout.addWidget(pw_report, nr + 3, 0)
     pw_report.setLabel('left', 'Magnitude', units='dB')
     pw_report.setLabel('bottom', 'Time', units='s')
+    pw_report.setWindowTitle(plotname)
     # pw_report.setXRange(0, x_max)
     # pw_report.setYRange(0, y_max)
     pw_report.plot(y)
 
-    #fiddle with this for additional plots
-    mw.resize(500,500)
+
 
 def random_generator(n):
     data_x = np.random.random(n)
@@ -239,14 +272,7 @@ def windowed_fft(q, slide=False, debug=False, noise_model=None):
   N = 512
 
   # t = []
-  theta = []
-  alpha = []
-  beta = []
-  gamma = []
-  X = []
-  Y = []
-  Z = []
-  O = []
+
 
   window = []
 
@@ -291,7 +317,7 @@ def windowed_fft(q, slide=False, debug=False, noise_model=None):
           # Warm up. Get some initial readings on the person to evaluate their starting state.
           if calibrating:
             print "Calibrating..."
-            # print "Entering warm up time: %d" % t
+            #print "Entering warm up time: %d" % t
 
             # EEG, x, y, z
             eeg = np.array([item['eeg'] for item in window])
@@ -454,7 +480,7 @@ def adjustVol(vol):
     print "Adjusted volume to " + str(vol)
 
 def readPipe(pipe):
-    while True:
+    while not exit_app:
         if not os.path.exists(pipe):
             os.mkfifo(pipe, 0666)
 
