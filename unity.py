@@ -233,7 +233,7 @@ def bound_eeg(eeg):
 def bound_output(output):
   # Bound output from 0.0 to 1.0
   if output < 0.0:
-    output = 0.0
+    output = 0.2
   elif output > 1.0:
     output = 1.0
 
@@ -282,11 +282,11 @@ def windowed_fft(q, slide=False, debug=False, noise_model=None):
   size = 1
   
   # Normal volume
-  baseline = -0.4
+  baseline = -0.3
 
   # Time
   t = 0.0
-  time_scale = 500.0
+  time_scale = 100.0
 
   WARM_UP_TIME = 5.0
 
