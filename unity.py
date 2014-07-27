@@ -256,7 +256,7 @@ def windowed_fft(q, slide=False, debug=False, noise_model=None):
   size = 1
   
   # Normal volume
-  baseline = -0.3
+  baseline = -0.4
 
   # Time
   t = 0.0
@@ -343,7 +343,7 @@ def windowed_fft(q, slide=False, debug=False, noise_model=None):
               eeg = [data - noise_model['eeg'] for data in eeg]
 
             # Offset human bias
-            eeg = [data - eeg_offset for data in eeg]
+            # eeg = [data - eeg_offset for data in eeg]
 
             x = get_mean_pos('x', window)
             x = offset_g(x, x_offset)
@@ -372,9 +372,9 @@ def windowed_fft(q, slide=False, debug=False, noise_model=None):
             output += noise
             output += baseline
             output += expo
-            output += x/30.0
-            output += y/30.0
-            output += z/30.0
+            output += x/40.0
+            output += y/40.0
+            output += z/40.0
 
             # Comment this for the PI
             theta.append(theta_avg)
