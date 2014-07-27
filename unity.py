@@ -127,17 +127,25 @@ def report_plot(nr, data, plotname):
     #x_max = y.size//512
     y_max = 60
     #x_max = 120
-
-    pw_report = pg.PlotWidget()
+    pw_report = pg.PlotWidget(title = plotname)
     layout.addWidget(pw_report, nr + 3, 0)
-    pw_report.setLabel('left', 'Magnitude', units='dB')
     pw_report.setLabel('bottom', 'Time', units='s')
+<<<<<<< HEAD
     pw_report.setWindowTitle(plotname)
     # pw_report.setXRange(0, x_max)
     #pw_report.setYRange(0, y_max)
     pw_report.plot(y)
+=======
+>>>>>>> 9169287644f3e9707d28f43128a35d46119ee790
 
+    if plotname is not 'Volume':
+        pw_report.setLabel('left', 'Magnitude', units='dB')
 
+    labelstyle = {'color': '#FFF', 'font-size': '14pt'}
+    #pw_report.setLabel('top', plotname, **labelstyle)
+    # pw_report.setXRange(0, x_max)
+    # pw_report.setYRange(0, y_max)
+    pw_report.plot(y, pen=(178,102,255))
 
 def random_generator(n):
     data_x = np.random.random(n)
