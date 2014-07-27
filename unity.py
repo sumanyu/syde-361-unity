@@ -454,7 +454,7 @@ def adjustVol(vol):
     print "Adjusted volume to " + str(vol)
 
 def readPipe(pipe):
-    while True:
+    while not exit_app:
         if not os.path.exists(pipe):
             os.mkfifo(pipe, 0666)
 
