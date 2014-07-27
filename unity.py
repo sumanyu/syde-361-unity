@@ -61,8 +61,8 @@ btn_stop.setMaximumSize(btn_start.sizeHint())
 
 def updateUI(state):
     #do stuff for ui if needed
-    if calibrating:
-        #set an hourglass on a timer
+    # if calibrating:
+    #     #set an hourglass on a timer
 
     if state is 'stopped':
         btn_start.setText('Start Meditation')
