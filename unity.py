@@ -125,7 +125,7 @@ def report_plot(nr, data, plotname):
     y = data
     #y_max = np.hstack(y).max(axis = 0)
     #x_max = y.size//512
-    #y_max = 1
+    y_max = 60
     #x_max = 120
 
     pw_report = pg.PlotWidget()
@@ -134,7 +134,7 @@ def report_plot(nr, data, plotname):
     pw_report.setLabel('bottom', 'Time', units='s')
     pw_report.setWindowTitle(plotname)
     # pw_report.setXRange(0, x_max)
-    # pw_report.setYRange(0, y_max)
+    #pw_report.setYRange(0, y_max)
     pw_report.plot(y)
 
 
