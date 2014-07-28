@@ -45,6 +45,15 @@ Y = []
 Z = []
 O = []
 
+eeg_warm = []
+theta_warm = []
+alpha_warm = []
+beta_warm = []
+gamma_warm = []
+X_warm = []
+Y_warm = []
+Z_warm = []
+
 app = QtGui.QApplication([])
 mw = QtGui.QMainWindow()
 mw.setMinimumSize(400, 150)
@@ -109,16 +118,20 @@ def btnclick_stop():
     btn_start.setDisabled(False)
     #data = np.array(random_generator(1000))
 
-    report_plot(0, theta, 'Theta Brain Waves')
+    # Statistics
+    alpha_avg = np.mean(alpha[-5:])
+    alpha_calibration = alpha_warm[-1]
+    alpha_percent_difference = 100.0 * (alpha_avg - alpha_calibration)/alpha_calibration
+
+    
+
+    report_plot(0, gamma, 'Gamma Brain Waves')
     report_plot(1, alpha, 'Alpha Brain Waves')
     report_plot(2, O, 'Volume')
 
     mw.resize(800, 800)
 
     updateUI(state = 'stopped')
-
-
-
 
 
 def report_plot(nr, data, plotname):
@@ -278,7 +291,6 @@ def windowed_fft(q, slide=False, debug=False, noise_model=None):
 
   # t = []
 
-
   window = []
 
   # Gaussian noise
@@ -301,14 +313,9 @@ def windowed_fft(q, slide=False, debug=False, noise_model=None):
   y_offset = 6
   z_offset = 60
 
-  eeg_warm = []
-  theta_warm = []
-  alpha_warm = []
-  beta_warm = []
-  gamma_warm = []
-  X_warm = []
-  Y_warm = []
-  Z_warm = []
+  # Remove all old values before restarting
+  for item in [theta, alpha, beta, gamma, X, Y, Z, O, eeg_warm, theta_warm, beta_warm, gamma_warm, X_warm, Y_warm, Z_warm]:
+    del item[:]
 
   file_name = "output_%s" % str(datetime.datetime.now().date())
   with open(file_name, 'w') as f:
