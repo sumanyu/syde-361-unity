@@ -130,13 +130,10 @@ def report_plot(nr, data, plotname):
     pw_report = pg.PlotWidget(title = plotname)
     layout.addWidget(pw_report, nr + 3, 0)
     pw_report.setLabel('bottom', 'Time', units='s')
-<<<<<<< HEAD
     pw_report.setWindowTitle(plotname)
     # pw_report.setXRange(0, x_max)
     #pw_report.setYRange(0, y_max)
     pw_report.plot(y)
-=======
->>>>>>> 9169287644f3e9707d28f43128a35d46119ee790
 
     if plotname is not 'Volume':
         pw_report.setLabel('left', 'Magnitude', units='dB')
