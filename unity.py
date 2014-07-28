@@ -123,7 +123,17 @@ def btnclick_stop():
     alpha_calibration = alpha_warm[-1]
     alpha_percent_difference = 100.0 * (alpha_avg - alpha_calibration)/alpha_calibration
 
-    
+    gamma_avg = np.mean(gamma[-5:])
+    gamma_calibration = gamma_warm[-1]
+    gamma_percent_difference = 100.0 * (gamma_avg - gamma_calibration)/gamma_calibration
+
+    print "**** Statistics ****"
+    print "Alpha baseline: ", alpha_calibration
+    print "Alpha final: ", alpha_avg
+    print "Alpha % change: ", alpha_percent_difference
+    print "Gamma baseline: ", gamma_calibration
+    print "Gamma final: ", gamma_avg
+    print "Gamma % change: ", gamma_percent_difference
 
     report_plot(0, gamma, 'Gamma Brain Waves')
     report_plot(1, alpha, 'Alpha Brain Waves')
